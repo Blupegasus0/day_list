@@ -1,4 +1,5 @@
 use std::io::Error;
+use std::collections::HashMap;
 
 use serde::{Serialize, Deserialize};
 use console::Term;
@@ -8,19 +9,24 @@ fn main() {
     let mut daylist: Vec<Todo>;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct Todo {
-    id: usize,
     name: String,
     notes: Option<String>,
     complete: bool,
 }
 
+#[derive(Serialize, Deserialize)]
+struct Daylist {
+    date: String,
+    // todos: Option<HashMap<String, Todo>>,   
+    todos: HashMap<String, Todo>,   
+}
+
 
 impl Todo {
-    fn new(id: usize, name: String, notes: Option<String>) -> Todo {
+    fn new(name: String, notes: Option<String>) -> Todo {
         Todo {
-            id,
             name,
             notes,
             complete: false,
@@ -37,26 +43,54 @@ impl Todo {
 
 }
 
-fn remove_todo(day_list: Vec<Todo>) -> Result<(), Error> {
-    todo!();
+impl Daylist {
+    fn new() -> Daylist {
+        Daylist {
+            date: String::from("today"),
+            todos: HashMap::new(),
+        }
+        
+    }
+
+    fn remove_todo(&mut self, name: String) -> Result<String, Error> {
+        match self.todos.remove(&name) {
+            Some(k) => Ok(format!("Removed todo: {}",k.name)),
+            None => Err(Error::other("todo not found")),
+        }
+    }
+
+    fn add_todo(&mut self, todo: Todo) -> Result<(), Error> {
+        if self.todos.contains_key(&todo.name) {
+            Err(Error::other("todo already exists, remove to update"))
+        } else {
+            self.todos.insert(todo.name.clone(), todo);
+            Ok(())
+        }
+    }
+
+    fn save_daylist() -> Result<(), Error> {
+        // write to toml file
+        todo!();
+    }
+
+    fn load_daylist() -> Result<(), Error> {
+        // load from toml file
+        todo!();
+    }
+
+    fn show_daylist() -> Result<(), Error> {
+        // print to term
+        Ok(())
+    }
+
 }
 
-fn save_daylist() -> Result<(), Error> {
-    todo!();
-}
 
-fn load_daylist() -> Result<(), Error> {
-    todo!();
-}
-
-fn show_daylist() -> Result<(), Error> {
-    Ok(())
-}
 
 #[test]
 fn print_todo() {
     let notes = Some(String::from("maybe minecraft"));
-    let mut my_task = Todo::new(1, String::from("play games with Lyssi"), notes.clone()); 
+    let mut my_task = Todo::new(String::from("play games with Lyssi"), notes.clone()); 
     assert_eq!(my_task.notes, notes);
     my_task.mark_done();
     assert!(my_task.complete);
@@ -65,7 +99,15 @@ fn print_todo() {
 #[test]
 fn mark_done() {
     let notes = Some(String::from(""));
-    let mut my_task = Todo::new(1, String::from(""), notes.clone()); 
+    let mut my_task = Todo::new(String::from(""), notes.clone()); 
     my_task.mark_done();
     assert!(my_task.complete);
+}
+
+#[test]
+fn add_remove() {
+    let mut my_daylist = Daylist::new();
+    let my_todo = Todo::new(String::from("go to gym"), Some(String::from("monday workout")) );
+    my_daylist.add_todo(my_todo).expect("tried to add existing todo");
+    my_daylist.remove_todo(String::from("go to gym")).expect("todo not found");
 }
