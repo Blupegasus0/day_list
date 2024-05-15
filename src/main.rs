@@ -5,10 +5,6 @@ use serde::{Serialize, Deserialize};
 use console::Term;
 use dialoguer::Input;
 
-fn main() {
-    let mut daylist: Vec<Todo>;
-}
-
 #[derive(Serialize, Deserialize, Clone)]
 struct Todo {
     name: String,
@@ -16,11 +12,40 @@ struct Todo {
     complete: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct Daylist {
     date: String,
-    // todos: Option<HashMap<String, Todo>>,   
     todos: HashMap<String, Todo>,   
+}
+
+fn main() -> Result<(), Error> {
+    let term = Term::stdout();
+    let mut daylist = Daylist::new();
+    
+    let _ = term.write_line("To Create a Todo, enter a name");
+    let name: String = Input::new()
+        .with_prompt("Todo Name?")
+        .interact_text()
+        .unwrap();
+    let notes: String = Input::new()
+        .with_prompt("Any notes?")
+        .interact_text()
+        .unwrap();
+
+    let todo = Todo::new(name, Some(notes));
+    let _ = daylist.add_todo(todo)?;
+
+
+/*
+    let todo_name = String::from("name");
+    let date = &daylist.date;
+    let name = &daylist.todos.get(&todo_name).unwrap().name;
+    let notes = &daylist.todos.get(&todo_name).unwrap().notes;
+*/
+
+    print!("{}", daylist.show_daylist().unwrap());
+
+    Ok(())
 }
 
 
@@ -78,9 +103,23 @@ impl Daylist {
         todo!();
     }
 
-    fn show_daylist() -> Result<(), Error> {
+    fn show_daylist(&self) -> Option<String> {
         // print to term
-        Ok(())
+        let mut daylist = String::new();
+
+        for (name, todo) in self.todos.iter() {
+            let note = format!("{}\n{}\n\nNotes: {}", 
+                self.date, 
+                name, 
+                todo.notes.as_ref().unwrap()
+            );
+
+            daylist.push_str(&note);
+            daylist.push_str("\n\n");
+        }
+
+
+        Some(daylist)
     }
 
 }
@@ -110,4 +149,13 @@ fn add_remove() {
     let my_todo = Todo::new(String::from("go to gym"), Some(String::from("monday workout")) );
     my_daylist.add_todo(my_todo).expect("tried to add existing todo");
     my_daylist.remove_todo(String::from("go to gym")).expect("todo not found");
+}
+
+#[test]
+fn show_daylist_test() {
+    let mut my_daylist = Daylist::new();
+    let todo_name = String::from("go to gym");
+    let my_todo = Todo::new((todo_name), Some(String::from("monday workout")) );
+    my_daylist.add_todo(my_todo).expect("tried to add existing todo");
+    println!("{}", my_daylist.show_daylist().expect("todo not found"));
 }
