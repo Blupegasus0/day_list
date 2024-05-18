@@ -21,29 +21,41 @@ struct Daylist {
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
     let mut daylist = Daylist::new();
-    
-    let _ = term.write_line("To Create a Todo, enter a name");
-    let name: String = Input::new()
-        .with_prompt("Todo Name?")
-        .interact_text()
-        .unwrap();
-    let notes: String = Input::new()
-        .with_prompt("Any notes?")
-        .interact_text()
-        .unwrap();
 
-    let todo = Todo::new(name, Some(notes));
-    let _ = daylist.add_todo(todo)?;
+    // running loop 
+    loop {
+
+        // x or q to exit 
+        // a to add d to delete
+        // e to edit 
+        // c to complete a todo
+
+        // print updated list after each 
+
+        let _ = term.write_line("To Create a Todo, enter a name");
+        let name: String = Input::new()
+            .with_prompt("Todo Name?")
+            .interact_text()
+            .unwrap();
+        let notes: String = Input::new()
+            .with_prompt("Any notes?")
+            .interact_text()
+            .unwrap();
+
+        let todo = Todo::new(name, Some(notes));
+        let _ = daylist.add_todo(todo)?;
 
 
-/*
-    let todo_name = String::from("name");
-    let date = &daylist.date;
-    let name = &daylist.todos.get(&todo_name).unwrap().name;
-    let notes = &daylist.todos.get(&todo_name).unwrap().notes;
-*/
+        /*
+        let todo_name = String::from("name");
+        let date = &daylist.date;
+        let name = &daylist.todos.get(&todo_name).unwrap().name;
+        let notes = &daylist.todos.get(&todo_name).unwrap().notes;
+        */
 
-    print!("{}", daylist.show_daylist().unwrap());
+        print!("{}", daylist.show_daylist());
+
+    }
 
     Ok(())
 }
@@ -74,7 +86,7 @@ impl Daylist {
             date: String::from("today"),
             todos: HashMap::new(),
         }
-        
+
     }
 
     fn remove_todo(&mut self, name: String) -> Result<String, Error> {
@@ -103,7 +115,7 @@ impl Daylist {
         todo!();
     }
 
-    fn show_daylist(&self) -> Option<String> {
+    fn show_daylist(&self) -> String {
         // print to term
         let mut daylist = String::new();
 
@@ -118,8 +130,7 @@ impl Daylist {
             daylist.push_str("\n\n");
         }
 
-
-        Some(daylist)
+        daylist
     }
 
 }
