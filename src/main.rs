@@ -18,9 +18,6 @@ struct Daylist {
     todos: HashMap<String, Todo>,   
 }
 
-enum Input {
-
-}
 
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
@@ -29,33 +26,44 @@ fn main() -> Result<(), Error> {
     // running loop 
     loop {
 
-        let nav_prompt = "Navigation:\na to add todo, d to delete todo\nc to complete a todo\ne to edit a todo\nx or q to exit program";
+        let nav_prompt = "\nNavigation:\na to add todo, d to delete todo\nc to complete a todo\ne to edit a todo\nx or q to exit program\n\n";
         // x or q to exit 
         // a to add d to delete
         // e to edit 
         // c to complete a todo
         let input: char = Input::new()
             .with_prompt(nav_prompt)
-            .interact_text();
+            .interact_text().expect("valid input type");
+
         match input {
-            Ok(i) => input = i,
-            Err => {println!("invalid input"); continue}
+            'a' => {
+                let _ = term.write_line("To Create a Todo, enter a name");
+                let name: String = Input::new()
+                    .with_prompt("Todo Name?")
+                    .interact_text()
+                    .unwrap();
+                let notes: String = Input::new()
+                    .with_prompt("Any notes?")
+                    .interact_text()
+                    .unwrap();
+
+                let todo = Todo::new(name, Some(notes));
+                let _ = daylist.add_todo(todo)?;
+            }
+            'x' => break,
+            'q' => break,
+            'e' => {
+                // create an array containing the todo names
+                // display the numbers along with the names to the user
+                // allow the user to enter the number when choosing a todo to mark_done
+                // thus reducing the chances that the user enters the wrong thing
+                // use this number to index the array and delete the appropriate todo
+            }
+            _ => println!("invalid input, try again"),
         }
 
         // print updated list after each 
 
-        let _ = term.write_line("To Create a Todo, enter a name");
-        let name: String = Input::new()
-            .with_prompt("Todo Name?")
-            .interact_text()
-            .unwrap();
-        let notes: String = Input::new()
-            .with_prompt("Any notes?")
-            .interact_text()
-            .unwrap();
-
-        let todo = Todo::new(name, Some(notes));
-        let _ = daylist.add_todo(todo)?;
 
 
         /*
