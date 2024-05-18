@@ -18,6 +18,10 @@ struct Daylist {
     todos: HashMap<String, Todo>,   
 }
 
+enum Input {
+
+}
+
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
     let mut daylist = Daylist::new();
@@ -25,10 +29,18 @@ fn main() -> Result<(), Error> {
     // running loop 
     loop {
 
+        let nav_prompt = "Navigation:\na to add todo, d to delete todo\nc to complete a todo\ne to edit a todo\nx or q to exit program";
         // x or q to exit 
         // a to add d to delete
         // e to edit 
         // c to complete a todo
+        let input: char = Input::new()
+            .with_prompt(nav_prompt)
+            .interact_text();
+        match input {
+            Ok(i) => input = i,
+            Err => {println!("invalid input"); continue}
+        }
 
         // print updated list after each 
 
