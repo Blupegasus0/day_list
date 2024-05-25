@@ -22,6 +22,11 @@ struct Daylist {
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
     let mut daylist = Daylist::new();
+    let mut todo_name: Vec<String> = Vec::new();
+
+
+    // deserialize and load from toml
+
 
     // running loop 
     loop {
@@ -50,14 +55,91 @@ fn main() -> Result<(), Error> {
                 let todo = Todo::new(name, Some(notes));
                 let _ = daylist.add_todo(todo)?;
             },
-            'd' => {},
-            'c' => {}
+
+            'd' => {
+                let name_to_remove: String = Input::new()
+                    .with_prompt("Todo Name to remove?")
+                    .interact_text()
+                    .unwrap();
+
+                loop {
+                    println!("Remove {}?", name_to_remove);
+                    let confirm: char = Input::new()
+                        .interact_text()
+                        .unwrap();
+
+                    match confirm {
+                        'y' => {
+                            let _ = daylist.remove_todo(name_to_remove.to_lowercase())?;
+                            println!("removed {}.", name_to_remove);
+                            break;
+                        },
+                        'n' => {
+                            let _ = term.write_line("nothing removed");
+                            break;
+                        },
+                        _ => {
+                            let _ = term.write_line("Invalid response, try again");
+                        }
+
+                    }
+
+                }
+            },
+
+            'c' => {
+                // find a way to display the completion status of todos
+                let name_to_complete: String = Input::new()
+                    .with_prompt("Todo Name to complete?")
+                    .interact_text()
+                    .unwrap();
+
+                let _ = daylist.complete_todo(name_to_complete.to_lowercase())?;
+            },
+
             'e' => {
-                // create an array containing the todo names
-                // display the numbers along with the names to the user
-                // allow the user to enter the number when choosing a todo to mark_done
-                // thus reducing the chances that the user enters the wrong thing
-                // use this number to index the array and delete the appropriate todo
+                //delete and add back
+                let name_to_remove: String = Input::new()
+                    .with_prompt("Todo Name to edit?")
+                    .interact_text()
+                    .unwrap();
+
+                loop {
+                    let _ = daylist.remove_todo(name_to_remove.to_lowercase())?;
+
+                    println!("Edit {}?", name_to_remove);
+                    let confirm: char = Input::new()
+                        .interact_text()
+                        .unwrap();
+
+                    match confirm {
+                        'y' => {
+                            let name: String = Input::new()
+                                .with_prompt("Todo Name?")
+                                .interact_text()
+                                .unwrap();
+                            let notes: String = Input::new()
+                                .with_prompt("Any notes?")
+                                .interact_text()
+                                .unwrap();
+
+                            let todo = Todo::new(name, Some(notes));
+                            let _ = daylist.add_todo(todo.clone())?;
+
+                            println!("updated {} to {}.", name_to_remove, todo.name);
+
+                            break;
+                        },
+                        'n' => {
+                            let _ = term.write_line("nothing changed");
+                            break;
+                        },
+                        _ => {
+                            let _ = term.write_line("Invalid response, try again");
+                        }
+
+                    }
+                }
             },
 
             'x' => break,
@@ -70,8 +152,14 @@ fn main() -> Result<(), Error> {
 
     }
 
+
+    // serialize and save to toml
+
     Ok(())
 }
+
+
+
 
 
 impl Todo {
@@ -113,9 +201,17 @@ impl Daylist {
         if self.todos.contains_key(&todo.name) {
             Err(Error::other("todo already exists, remove to update"))
         } else {
-            self.todos.insert(todo.name.clone(), todo);
+            self.todos.insert(todo.name.to_lowercase().clone(), todo);
             Ok(())
         }
+    }
+
+    fn complete_todo(&mut self, name: String) -> Result<(), Error> {
+        match self.todos.get_mut(&name) {
+            Some(todo) => Ok(todo.mark_done()),
+            None => Err(Error::other("todo not found")),
+        }
+
     }
 
     fn save_daylist() -> Result<(), Error> {
@@ -135,7 +231,7 @@ impl Daylist {
         for (name, todo) in self.todos.iter() {
             let note = format!("\n{}\n{}\nNotes: {}", 
                 self.date, 
-                name, 
+                todo.name, 
                 todo.notes.as_ref().unwrap()
             );
 
@@ -179,7 +275,7 @@ fn add_remove() {
 fn show_daylist_test() {
     let mut my_daylist = Daylist::new();
     let todo_name = String::from("go to gym");
-    let my_todo = Todo::new((todo_name), Some(String::from("monday workout")) );
+    let my_todo = Todo::new(todo_name, Some(String::from("monday workout")) );
     my_daylist.add_todo(my_todo).expect("tried to add existing todo");
-    println!("{}", my_daylist.show_daylist().expect("todo not found"));
+    println!("{}", my_daylist.show_daylist());
 }
