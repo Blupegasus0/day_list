@@ -1,9 +1,12 @@
 use std::io::Error;
+use std::fs;
 use std::collections::HashMap;
 
 use serde::{Serialize, Deserialize};
 use console::Term;
 use dialoguer::Input;
+use chrono;
+use toml;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Todo {
@@ -23,9 +26,19 @@ fn main() -> Result<(), Error> {
     let term = Term::stdout();
     let mut daylist = Daylist::new();
     let mut todo_name: Vec<String> = Vec::new();
+    let db_path = "daylist_db.toml";
 
+    // read in file and put contents in daylist if db exists
+    // create file and create a new daylist var if db does not exist
 
     // deserialize and load from toml
+    let daylist_db = fs::read_to_string(db_path);
+    match daylist_db {
+        Ok(db) => daylist = toml::from_str(&db).expect("reads daylist from toml string"),
+        Err(_) => {}
+    }
+
+
 
 
     // running loop 
@@ -35,6 +48,8 @@ fn main() -> Result<(), Error> {
         // e to edit 
         // c to complete a todo
         let nav_prompt = "\nNavigation:\na to add todo, d to delete todo\nc to complete a todo\ne to edit a todo\nx or q to exit program\n\n";
+
+        print!("{}", daylist.show_daylist());
 
         let input: char = Input::new()
             .with_prompt(nav_prompt)
@@ -148,12 +163,13 @@ fn main() -> Result<(), Error> {
         }
 
 
-        print!("{}", daylist.show_daylist());
 
     }
 
 
     // serialize and save to toml
+    let daylist_toml = toml::to_string(&daylist).expect("converted daylist to toml");
+    fs::write(&db_path, &daylist_toml).expect("saved daylist to db"); // unlikely to fail
 
     Ok(())
 }
@@ -229,8 +245,14 @@ impl Daylist {
         let mut daylist = String::new();
 
         for (name, todo) in self.todos.iter() {
-            let note = format!("\n{}\n{}\nNotes: {}", 
+            let mut completion = "[ ]";
+            if todo.complete == true {
+                completion = "[x]";
+            }
+
+            let note = format!("\n{}\n{} {}\nNotes: {}", 
                 self.date, 
+                completion,
                 todo.name, 
                 todo.notes.as_ref().unwrap()
             );

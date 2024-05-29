@@ -1,0 +1,11 @@
+date = "today"
+
+[todos.x]
+name = "x"
+notes = "x"
+complete = true
+
+[todos."something new"]
+name = "something new"
+notes = "yes"
+complete = false
