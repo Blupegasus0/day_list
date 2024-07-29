@@ -12,7 +12,7 @@ local handle_local_build = io.popen(local_build)
 print("Running: " .. local_build)
 if handle_local_build ~= nil then
   local result = handle_local_build:read("*a")
-  local success, exit_type, exit_code = handle_local_build:close()
+  local success, _, exit_code = handle_local_build:close()
   if not success then
     print("error: " .. exit_code .. "\n" .. result)
   end
@@ -24,7 +24,7 @@ local handle_add_target= io.popen(add_win_target)
 print("Running: " .. add_win_target)
 if handle_add_target ~= nil then
   local result = handle_add_target:read("*a")
-  local success, exit_type, exit_code = handle_add_target:close()
+  local success, _, exit_code = handle_add_target:close()
   if not success then
     print("error: " .. exit_code .. "\n" .. result)
   end
@@ -36,7 +36,7 @@ local handle_win_build = io.popen(win_build)
 print("Running: " .. win_build)
 if handle_win_build ~= nil then
   local result = handle_win_build:read("*a")
-  local success, exit_type, exit_code = handle_win_build:close()
+  local success, _, exit_code = handle_win_build:close()
   if not success then
     print("error: " .. exit_code .. "\n" .. result)
   end
