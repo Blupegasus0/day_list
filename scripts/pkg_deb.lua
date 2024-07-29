@@ -4,11 +4,15 @@
 -- Define package metadata
 local package_name = "my-rust-app"
 local version = "1.0.0"
-local maintainer = "Your Name <your.email@example.com>"
 local description = "A simple to-do list app written in Rust."
+local maintainer = "Blupegasus0  <kengen-bb@proton.me>"
+local copyright = "Blupegasus0"
+local license_file = "LICENSE"
 local architecture = "amd64"
 local dependencies = "libc6 (>= 2.17), libgcc1 (>= 1:3.0)" -- Adjust as needed
 local binary_name = "my-rust-app"  -- The name of your compiled Rust binary
+
+
 
 -- Define file paths
 local base_dir = package_name .. "-" .. version
