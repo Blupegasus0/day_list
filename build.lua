@@ -4,6 +4,7 @@ Dependencies_linux = {
   "cargp",
   "rustup",
   "mingw-w64",
+  "cargo-deb",
 }
 
 -- Create release version for Linux (current os)
