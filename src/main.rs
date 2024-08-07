@@ -8,23 +8,12 @@ use dialoguer::Input;
 use chrono;
 use toml;
 
-#[derive(Serialize, Deserialize, Clone)]
-struct Todo {
-    name: String,
-    notes: Option<String>,
-    complete: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-struct Daylist {
-    date: String,
-    todos: HashMap<String, Todo>,   
-}
-
+use DayList::Todo;
+use DayList::Daylist;
 
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
-    let mut daylist = Daylist::new();
+    let mut daylist = Daylist::new(); // !
     let mut todo_name: Vec<String> = Vec::new();
     let db_path = "daylist_db.toml";
 
@@ -141,7 +130,7 @@ fn main() -> Result<(), Error> {
                             let todo = Todo::new(name, Some(notes));
                             let _ = daylist.add_todo(todo.clone())?;
 
-                            println!("updated {} to {}.", name_to_remove, todo.name);
+                            println!("updated {} to {}.", name_to_remove, todo.get_name());
 
                             break;
                         },
@@ -167,7 +156,7 @@ fn main() -> Result<(), Error> {
     }
 
 
-    // serialize and save to toml
+    // serialize and save to toml   - CREATE/UPDATE
     let daylist_toml = toml::to_string(&daylist).expect("converted daylist to toml");
     fs::write(&db_path, &daylist_toml).expect("saved daylist to db"); // unlikely to fail
 
@@ -177,94 +166,6 @@ fn main() -> Result<(), Error> {
 
 
 
-
-impl Todo {
-    fn new(name: String, notes: Option<String>) -> Todo {
-        Todo {
-            name,
-            notes,
-            complete: false,
-        }
-    }
-
-    fn edit_todo(&self, ) -> Result<(), Error> {
-        todo!();
-    }
-
-    fn mark_done(&mut self) {
-        self.complete = true;
-    }
-
-}
-
-impl Daylist {
-    fn new() -> Daylist {
-        Daylist {
-            date: String::from("today"),
-            todos: HashMap::new(),
-        }
-
-    }
-
-    fn remove_todo(&mut self, name: String) -> Result<String, Error> {
-        match self.todos.remove(&name) {
-            Some(k) => Ok(format!("Removed todo: {}",k.name)),
-            None => Err(Error::other("todo not found")),
-        }
-    }
-
-    fn add_todo(&mut self, todo: Todo) -> Result<(), Error> {
-        if self.todos.contains_key(&todo.name) {
-            Err(Error::other("todo already exists, remove to update"))
-        } else {
-            self.todos.insert(todo.name.to_lowercase().clone(), todo);
-            Ok(())
-        }
-    }
-
-    fn complete_todo(&mut self, name: String) -> Result<(), Error> {
-        match self.todos.get_mut(&name) {
-            Some(todo) => Ok(todo.mark_done()),
-            None => Err(Error::other("todo not found")),
-        }
-
-    }
-
-    fn save_daylist() -> Result<(), Error> {
-        // write to toml file
-        todo!();
-    }
-
-    fn load_daylist() -> Result<(), Error> {
-        // load from toml file
-        todo!();
-    }
-
-    fn show_daylist(&self) -> String {
-        // print to term
-        let mut daylist = String::new();
-
-        for (name, todo) in self.todos.iter() {
-            let mut completion = "[ ]";
-            if todo.complete == true {
-                completion = "[x]";
-            }
-
-            let note = format!("\n{}\n{} {}\nNotes: {}", 
-                self.date, 
-                completion,
-                todo.name, 
-                todo.notes.as_ref().unwrap()
-            );
-
-            daylist.push_str(&note);
-            daylist.push_str("\n\n");
-        }
-
-        daylist
-    }
-
-}
 
 
 
