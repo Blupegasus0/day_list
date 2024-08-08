@@ -10,11 +10,8 @@ use chrono::prelude::*;
 use chrono;
 use toml;
 
-
 use DayList::Todo;
 use DayList::Daylist;
-use self::diesel_demo::*;
-use self::models::*;
 
 fn main() -> Result<(), Error> {
     let term = Term::stdout();

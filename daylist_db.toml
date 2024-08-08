@@ -9,3 +9,8 @@ complete = true
 name = "something new"
 notes = "yes"
 complete = false
+
+[todos."finish adding postges to daylist"]
+name = "Finish adding Postges to Daylist"
+notes = "Currently creating a new migration"
+complete = false
