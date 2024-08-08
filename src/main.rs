@@ -154,14 +154,6 @@ fn main() -> Result<(), Error> {
 fn test_db() {
     let connection = establish_connection();
 
-    let new_todo = create_todo(
-        &mut connection,
-        "Learn Rust",
-        false,
-        Some("Focus on Diesel integration"),
-        Local::today().naive_local(),
-    );
-
     println!("Created new todo");
 }
 
