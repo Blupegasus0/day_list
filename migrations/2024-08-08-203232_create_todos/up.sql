@@ -3,10 +3,10 @@ CREATE TABLE todo (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
-    date_created TEXT DEFAULT (datetime('now')),
+    --date_created INTEGER DEFAULT (datetime('now')),
     completed BOOLEAN NOT NULL CHECK (completed IN (0, 1)),
-    due_date TEXT,
-    reminder_date TEXT,
+    --due_date INTEGER,
+    --reminder_date INTEGER,
     parent_todo_id INTEGER,
     FOREIGN KEY (parent_todo_id) REFERENCES todo(id) ON DELETE CASCADE
 );

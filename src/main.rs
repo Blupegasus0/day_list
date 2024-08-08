@@ -152,8 +152,20 @@ fn main() -> Result<(), Error> {
 
 #[test]
 fn test_db() {
-    let connection = establish_connection();
+    use DayList::schema::todo::dsl::*;
+    use DayList::establish_connection;
+    use DayList::models::Todo;
 
-    println!("Created new todo");
+    let connection = &mut establish_connection();
+    let results = todo
+        .select(Todo::as_select())
+        .load(connection)
+        .expect("Error loading todos");
+
+    println!("Displaying {} todos", results.len());
+    for t in results {
+        println!("{}", t.title);
+        println!("-----------\n");
+        println!("{}", t.description.unwrap());
+    }
 }
-

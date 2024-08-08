@@ -2,7 +2,7 @@
 
 diesel::table! {
     label (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         name -> Text,
         color -> Nullable<Text>,
     }
@@ -10,7 +10,7 @@ diesel::table! {
 
 diesel::table! {
     todo (id) {
-        id -> Nullable<Integer>,
+        id -> Integer,
         title -> Text,
         description -> Nullable<Text>,
         date_created -> Nullable<Text>,
