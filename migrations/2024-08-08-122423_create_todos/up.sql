@@ -1,8 +1,9 @@
 -- Your SQL goes here
 CREATE TABLE todos (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
     completed BOOLEAN NOT NULL,
     notes TEXT,
     date DATE NOT NULL
 );
+
