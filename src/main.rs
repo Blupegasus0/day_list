@@ -5,11 +5,16 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use console::Term;
 use dialoguer::Input;
+use diesel::prelude::*;
+use chrono::prelude::*;
 use chrono;
 use toml;
 
+
 use DayList::Todo;
 use DayList::Daylist;
+use self::diesel_demo::*;
+use self::models::*;
 
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
@@ -165,6 +170,20 @@ fn main() -> Result<(), Error> {
 
 
 
+#[test]
+fn test_db() {
+    let connection = establish_connection();
+
+    let new_todo = create_todo(
+        &connection,
+        "Learn Rust",
+        false,
+        Some("Focus on Diesel integration"),
+        Local::today().naive_local(),
+    );
+
+    println!("Created new todo: {:?}", new_todo);
+}
 
 
 

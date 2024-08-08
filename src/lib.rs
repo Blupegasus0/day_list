@@ -1,12 +1,14 @@
 use std::io::Error;
 use std::collections::HashMap;
 
+use chrono::NaiveDate;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Todo {
     name: String,
     notes: Option<String>,
+    //date: NaiveDate,
     complete: bool,
 }
 
