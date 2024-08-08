@@ -1,35 +1,20 @@
 use std::io::Error;
-use std::fs;
-use std::collections::HashMap;
 
-use serde::{Serialize, Deserialize};
 use console::Term;
 use dialoguer::Input;
 use diesel::prelude::*;
-use chrono::prelude::*;
+use diesel::sqlite::SqliteConnection;
 use chrono;
-use toml;
 
-use DayList::Todo;
-use DayList::Daylist;
+//mod schema;
+//mod models;
 
 fn main() -> Result<(), Error> {
     let term = Term::stdout();
-    let mut daylist = Daylist::new(); // !
     let mut todo_name: Vec<String> = Vec::new();
-    let db_path = "daylist_db.toml";
 
     // read in file and put contents in daylist if db exists
     // create file and create a new daylist var if db does not exist
-
-    // deserialize and load from toml
-    let daylist_db = fs::read_to_string(db_path);
-    match daylist_db {
-        Ok(db) => daylist = toml::from_str(&db).expect("reads daylist from toml string"),
-        Err(_) => {}
-    }
-
-
 
 
     // running loop 
@@ -40,13 +25,14 @@ fn main() -> Result<(), Error> {
         // c to complete a todo
         let nav_prompt = "\nNavigation:\na to add todo, d to delete todo\nc to complete a todo\ne to edit a todo\nx or q to exit program\n\n";
 
-        print!("{}", daylist.show_daylist());
+        // show day_list
 
         let input: char = Input::new()
             .with_prompt(nav_prompt)
             .interact_text().expect("valid input type");
 
         match input {
+            /*
             'a' => {
                 let _ = term.write_line("To Create a Todo, enter a name");
                 let name: String = Input::new()
@@ -147,6 +133,7 @@ fn main() -> Result<(), Error> {
                     }
                 }
             },
+        */
 
             'x' => break,
             'q' => break,
@@ -158,10 +145,6 @@ fn main() -> Result<(), Error> {
     }
 
 
-    // serialize and save to toml   - CREATE/UPDATE
-    let daylist_toml = toml::to_string(&daylist).expect("converted daylist to toml");
-    fs::write(&db_path, &daylist_toml).expect("saved daylist to db"); // unlikely to fail
-
     Ok(())
 }
 
@@ -172,49 +155,13 @@ fn test_db() {
     let connection = establish_connection();
 
     let new_todo = create_todo(
-        &connection,
+        &mut connection,
         "Learn Rust",
         false,
         Some("Focus on Diesel integration"),
         Local::today().naive_local(),
     );
 
-    println!("Created new todo: {:?}", new_todo);
+    println!("Created new todo");
 }
 
-
-
-
-#[test]
-fn print_todo() {
-    let notes = Some(String::from("maybe minecraft"));
-    let mut my_task = Todo::new(String::from("play games with Lyssi"), notes.clone()); 
-    assert_eq!(my_task.notes, notes);
-    my_task.mark_done();
-    assert!(my_task.complete);
-}
-
-#[test]
-fn mark_done() {
-    let notes = Some(String::from(""));
-    let mut my_task = Todo::new(String::from(""), notes.clone()); 
-    my_task.mark_done();
-    assert!(my_task.complete);
-}
-
-#[test]
-fn add_remove() {
-    let mut my_daylist = Daylist::new();
-    let my_todo = Todo::new(String::from("go to gym"), Some(String::from("monday workout")) );
-    my_daylist.add_todo(my_todo).expect("tried to add existing todo");
-    my_daylist.remove_todo(String::from("go to gym")).expect("todo not found");
-}
-
-#[test]
-fn show_daylist_test() {
-    let mut my_daylist = Daylist::new();
-    let todo_name = String::from("go to gym");
-    let my_todo = Todo::new(todo_name, Some(String::from("monday workout")) );
-    my_daylist.add_todo(my_todo).expect("tried to add existing todo");
-    println!("{}", my_daylist.show_daylist());
-}
