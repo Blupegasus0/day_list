@@ -1,6 +1,7 @@
 /target
 db*
 .env
+diesel.toml
 
 
 !db.rs
