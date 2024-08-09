@@ -169,3 +169,28 @@ fn test_db() {
         println!("{}", t.description.unwrap());
     }
 }
+
+#[test]
+fn test_create() {
+    use DayList::schema;
+    use DayList::establish_connection;
+    use DayList::models::NewTodo;
+    use DayList::models::Todo;
+
+    let mut title = String::from("New todo");
+    let mut description = String::from("I am testing the db");
+    let mut completed = false;
+
+    let new_todo = NewTodo { 
+        title: title, 
+        description: Some(description), 
+        completed: false, 
+        parent_todo_id: None 
+    };
+    let connection = &mut establish_connection();
+
+    diesel::insert_into(schema::todo::table)
+        .values(&new_todo)
+        .execute(connection)
+        .expect("Error saving new todo");
+}
