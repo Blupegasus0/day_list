@@ -3,7 +3,8 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::backend::{Backend, CrosstermBackend};
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Style};
-use tui::widgets::{Block, Borders, Paragraph};
+use tui::widgets::{Block, Borders, Paragraph, List, ListItem};
+use tui::text::{Spans, Span};
 use tui::Terminal;
 use std::io;
 
@@ -23,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .direction(Direction::Vertical)
                 .constraints(
                     [
-                        Constraint::Min(0),
+                        Constraint::Min(0), // main section
                         Constraint::Length(3), // Bottom row for keyboard shortcuts
                     ]
                     .as_ref(),
@@ -86,9 +87,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let center_main_block = Block::default().title("MyDaylist").borders(Borders::ALL);
             let right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
             let right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
-            let bottom_row_block = Paragraph::new("Press 'q' to quit")
-                .style(Style::default().fg(Color::White).bg(Color::DarkGray))
-                .block(Block::default().borders(Borders::ALL));
+
+            // A list for the bottom row showing keyboard shortcuts
+            let bottom_row_items = vec![
+                ListItem::new(Span::raw("q: Quit")),
+                ListItem::new(Span::raw("h: Help")),
+            ];
+            let bottom_row_list = List::new(bottom_row_items)
+                .block(Block::default().borders(Borders::ALL))
+                .highlight_style(Style::default());
+
+
 
             // Render the blocks
             f.render_widget(left_top_block, left_column[0]);
@@ -97,12 +106,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             f.render_widget(center_main_block, center_column[1]);
             f.render_widget(right_top_block, right_column[0]);
             f.render_widget(right_bottom_block, right_column[1]);
-            f.render_widget(bottom_row_block, chunks[1]);
+            // f.render_widget(bottom_row_block, chunks[1]);
+            f.render_widget(bottom_row_list, chunks[1]);
         })?;
 
 
         // Match on different types of events
         match event::read()? {
+            // Handle keyboard events
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => break, // Quit on 'q' press
                 KeyCode::Char('Q') => break, // Quit on 'Q' press
@@ -110,32 +121,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
 
             Event::Mouse(mouse_event) => {
-                // Handle mouse events (parsing detailed below)
+                // Handle mouse events 
                 match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
-                        println!("Mouse button {:?} pressed at ({}, {})", button, mouse_event.column, mouse_event.row);
-                        // `button` gives you the key type (e.g., left, right, middle)
-                        // `x` and `y` give you the location
+                        //button, mouse_event.column, mouse_event.row
                     }
                     crossterm::event::MouseEventKind::Up(button) => {
-                        println!("Mouse button {:?} released at ({}, {})", button, mouse_event.column, mouse_event.row);
+                        // button, mouse_event.column, mouse_event.row
                     }
                     crossterm::event::MouseEventKind::Drag(button) => {
-                        println!("Mouse dragged with {:?} at ({}, {})", button, mouse_event.column, mouse_event.row);
+                        // button, mouse_event.column, mouse_event.row
                     }
                     crossterm::event::MouseEventKind::ScrollUp => {
-                        println!("Mouse scrolled up at ({}, {})", mouse_event.column, mouse_event.row);
+                        //mouse_event.column, mouse_event.row
                     }
                     crossterm::event::MouseEventKind::ScrollDown => {
-                        println!("Mouse scrolled down at ({}, {})", mouse_event.column, mouse_event.row);
+                        //mouse_event.column, mouse_event.row
                     }
                     _ => {}
                 }
             },
 
+            // Handle terminal resize if needed
             Event::Resize(width, height) => {
-                // Handle terminal resize if needed
-                println!("Terminal resized to {}x{}", width, height);
+                // Draw large resizing message
+                println!("Terminal resized to {}x{}", width, height); // tmp
             }
             _ => {}
         }
