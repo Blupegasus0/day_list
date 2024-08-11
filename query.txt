@@ -1,1 +1,0 @@
-the trait `FromSql<diesel::sql_types::Text, Sqlite>` is not implemented for `NaiveDateTime`, which is required by `Option<NaiveDateTime>: FromSqlRow<diesel::sql_types::Nullable<diesel::sql_types::Text>, Sqlite>`

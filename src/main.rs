@@ -144,20 +144,24 @@ fn main() -> Result<(), Error> {
 
     }
 
+    println!("Running Tests...");
+    db_read();
+
 
     Ok(())
 }
 
 
 
-#[test]
-fn test_read() {
-    use DayList::schema::todo::dsl::*;
+fn db_read() {
+// -- Read
+    use DayList::schema;
     use DayList::establish_connection;
+    use DayList::models::NewTodo;
     use DayList::models::Todo;
 
     let connection = &mut establish_connection();
-    let results = todo
+    let results = schema::todo::table
         .select(Todo::as_select())
         .load(connection)
         .expect("Error loading todos");
@@ -168,10 +172,12 @@ fn test_read() {
         println!("-----------\n");
         println!("{}", t.description.unwrap());
     }
+    
+
 }
 
-#[test]
-fn test_create() {
+fn db_create() {
+    // -- Create
     use DayList::schema;
     use DayList::establish_connection;
     use DayList::models::NewTodo;
@@ -195,9 +201,8 @@ fn test_create() {
         .expect("Error saving new todo");
 }
 
-
-#[test]
-fn test_update() {
+fn db_update() {
+// -- Update
     use DayList::schema;
     use DayList::establish_connection;
     use DayList::models::NewTodo;
@@ -211,22 +216,26 @@ fn test_update() {
         .execute(connection)
         .unwrap();
     // println!("Completed '{}'", todo.title);
+
+
 }
 
-#[test]
-fn test_delete() {
+fn db_delete() {
+    // -- Delete
     use DayList::schema;
     use DayList::establish_connection;
     use DayList::models::NewTodo;
     use DayList::models::Todo;
 
+    let connection = &mut establish_connection();
     let target = String::from("test");
     let pattern = format!("%{}%", target);
 
-    let connection = &mut establish_connection();
     let num_deleted = diesel::delete(schema::todo::table.filter(schema::todo::title.like(pattern)))
         .execute(connection)
         .expect("Error deleting posts");
 
     println!("Deleted {} todos", num_deleted);
+
 }
+
