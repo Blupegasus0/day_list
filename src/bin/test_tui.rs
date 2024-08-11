@@ -93,6 +93,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .split(columns[2]);
 
+
+
             // Define the blocks
             // -- Left
             let left_top_block = Block::default().title("Left Top").borders(Borders::ALL);
@@ -130,6 +132,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             f.render_widget(right_bottom_block, right_column[1]);
             // f.render_widget(bottom_row_block, chunks[1]);
             f.render_widget(bottom_row_list, chunks[1]);
+
+            f.render_widget(search_widget, center_column[0]);
         })?;
 
 
@@ -149,6 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     _ => {} // Handle other keys as needed
                 },
 
+                // Default Key handling
                 _ =>  match key.code {
                     KeyCode::Char('q') => break, // Quit on 'q' press
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
@@ -158,9 +163,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             }
 
-            Event::Mouse(mouse_event) => {
+            Event::Mouse(mouse_event) => match focused_widget {
                 // Handle mouse events 
-                match mouse_event.kind {
+                Widget::Main => match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
                         //button, mouse_event.column, mouse_event.row
                     }
@@ -177,7 +182,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         //mouse_event.column, mouse_event.row
                     }
                     _ => {}
-                }
+                },
+                
+                // Default Mouse handling
+                _ => match mouse_event.kind {
+                    crossterm::event::MouseEventKind::Down(button) => {
+                        //button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::Up(button) => {
+                        // button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::Drag(button) => {
+                        // button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::ScrollUp => {
+                        //mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::ScrollDown => {
+                        //mouse_event.column, mouse_event.row
+                    }
+                    _ => {}
+                },
             },
 
             // Handle terminal resize if needed
