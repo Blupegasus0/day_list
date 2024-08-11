@@ -8,6 +8,13 @@ use tui::text::{Spans, Span};
 use tui::Terminal;
 use std::io;
 
+enum Widget {
+    Calendar,
+    Main,
+    Search,
+    Upcoming,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -16,6 +23,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     terminal.clear()?;
+
+
+    // State
+    let mut search_string = String::new();
+    let mut focused_widget = Widget::Main; 
+        focused_widget = Widget::Search; // TEMP
 
     loop {
         terminal.draw(|f| {
@@ -81,10 +94,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .split(columns[2]);
 
             // Define the blocks
+            // -- Left
             let left_top_block = Block::default().title("Left Top").borders(Borders::ALL);
             let left_bottom_block = Block::default().title("Left Bottom").borders(Borders::ALL);
+
+            // -- Center
             let center_search_block = Block::default().title("Search").borders(Borders::ALL);
+            let search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search Bar")
+                .borders(Borders::ALL))
+                .style(Style::default().fg(Color::Yellow));
+
             let center_main_block = Block::default().title("MyDaylist").borders(Borders::ALL);
+
+            // -- Right
             let right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
             let right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
 
@@ -114,11 +136,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Match on different types of events
         match event::read()? {
             // Handle keyboard events
-            Event::Key(key) => match key.code {
-                KeyCode::Char('q') => break, // Quit on 'q' press
-                KeyCode::Char('Q') => break, // Quit on 'Q' press
-                _ => {} // Handle other keys as needed
-            },
+            Event::Key(key) => match focused_widget {
+                // Search box is focused
+                Widget::Search => match key.code {
+                    KeyCode::Esc => focused_widget = Widget::Main, // Refocus Main
+                    KeyCode::Char(c) => search_string.push(c), // append character to search string
+                    KeyCode::Backspace => {search_string.pop();}, // remove last character
+                    KeyCode::Enter => {
+                        println!("Search submitted: {}", search_string); // SUBMIT SEARCH STRING...
+                        search_string.clear();
+                    }
+                    _ => {} // Handle other keys as needed
+                },
+
+                _ =>  match key.code {
+                    KeyCode::Char('q') => break, // Quit on 'q' press
+                    KeyCode::Char('Q') => break, // Quit on 'Q' press
+                    KeyCode::Esc => break, // Exit on Escape key - We'll see if this is kept
+                    _ => {} // Handle other keys as needed
+                },
+
+            }
 
             Event::Mouse(mouse_event) => {
                 // Handle mouse events 
