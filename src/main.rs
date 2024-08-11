@@ -1,241 +1,242 @@
-use std::io::Error;
+use std::error::Error;
+use std::io;
 
+use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use tui::backend::{Backend, CrosstermBackend};
+use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::style::{Color, Style};
+use tui::widgets::{Block, Borders, Paragraph, List, ListItem};
+use tui::text::{Spans, Span};
+use tui::Terminal;
 use console::Term;
-use dialoguer::Input;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use chrono;
 
-//mod schema;
-//mod models;
+use DayList::db;
 
-fn main() -> Result<(), Error> {
-    let term = Term::stdout();
-    let mut todo_name: Vec<String> = Vec::new();
+enum Widget {
+    Calendar,
+    Main,
+    Search,
+    Upcoming,
+}
 
-    // read in file and put contents in daylist if db exists
-    // create file and create a new daylist var if db does not exist
+fn main() -> Result<(), Box<dyn Error>> {
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    crossterm::execute!(stdout, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    terminal.clear()?;
 
 
-    // running loop 
+    // State
+    let mut search_string = String::new();
+    let mut main_content_string = String::from("test");
+    let mut focused_widget = Widget::Main; 
+        focused_widget = Widget::Search; // TEMP
+    
+    // Initialize widget content 
+    main_content_string = db::read();
+
     loop {
-        // x or q to exit 
-        // a to add d to delete
-        // e to edit 
-        // c to complete a todo
-        let nav_prompt = "\nNavigation:\na to add todo, d to delete todo\nc to complete a todo\ne to edit a todo\nx or q to exit program\n\n";
+        terminal.draw(|f| {
+            // Split the screen into vertical chunks
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Min(0), // main section
+                        Constraint::Length(3), // Bottom row for keyboard shortcuts
+                    ]
+                    .as_ref(),
+                )
+                .split(f.size());
 
-        // show day_list
+            // Split the main area into 3 columns
+            let columns = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(
+                    [
+                        Constraint::Percentage(20),
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(20),
+                    ]
+                    .as_ref(),
+                )
+                .split(chunks[0]);
 
-        let input: char = Input::new()
-            .with_prompt(nav_prompt)
-            .interact_text().expect("valid input type");
+            // Left column split into 20% and 80% vertically
+            let left_column = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Percentage(20),
+                        Constraint::Percentage(80),
+                    ]
+                    .as_ref(),
+                )
+                .split(columns[0]);
 
-        match input {
-            /*
-            'a' => {
-                let _ = term.write_line("To Create a Todo, enter a name");
-                let name: String = Input::new()
-                    .with_prompt("Todo Name?")
-                    .interact_text()
-                    .unwrap();
-                let notes: String = Input::new()
-                    .with_prompt("Any notes?")
-                    .interact_text()
-                    .unwrap();
+            // Center column split with a search bar at the top
+            let center_column = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Length(3), // Space for a search bar
+                        Constraint::Min(0),    // The rest of the space
+                    ]
+                    .as_ref(),
+                )
+                .split(columns[1]);
 
-                let todo = Todo::new(name, Some(notes));
-                let _ = daylist.add_todo(todo)?;
-            },
+            // Right column split into 2 equal parts vertically
+            let right_column = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Percentage(50),
+                        Constraint::Percentage(50),
+                    ]
+                    .as_ref(),
+                )
+                .split(columns[2]);
 
-            'd' => {
-                let name_to_remove: String = Input::new()
-                    .with_prompt("Todo Name to remove?")
-                    .interact_text()
-                    .unwrap();
 
-                loop {
-                    println!("Remove {}?", name_to_remove);
-                    let confirm: char = Input::new()
-                        .interact_text()
-                        .unwrap();
 
-                    match confirm {
-                        'y' => {
-                            let _ = daylist.remove_todo(name_to_remove.to_lowercase())?;
-                            println!("removed {}.", name_to_remove);
-                            break;
-                        },
-                        'n' => {
-                            let _ = term.write_line("nothing removed");
-                            break;
-                        },
-                        _ => {
-                            let _ = term.write_line("Invalid response, try again");
-                        }
+            // Define the blocks
+            let left_top_block = Block::default().title("Left Top").borders(Borders::ALL);
+            let left_bottom_block = Block::default().title("Left Bottom").borders(Borders::ALL);
 
+            let center_search_block = Block::default().title("Search").borders(Borders::ALL);
+            let center_main_block = Block::default().title("MyDaylist").borders(Borders::ALL);
+
+            let right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
+            let right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
+
+            // State Assignments
+            let search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
+                .borders(Borders::ALL))
+                .style(Style::default().fg(Color::Yellow));
+
+            let main_content = Paragraph::new(main_content_string.as_ref()).block(Block::default().title("Search")
+                .borders(Borders::ALL))
+                .style(Style::default().fg(Color::Yellow));
+
+            // A list for the bottom row showing keyboard shortcuts
+            let bottom_row_items = vec![
+                ListItem::new(Span::raw("q: Quit")),
+                ListItem::new(Span::raw("h: Help")),
+            ];
+            let bottom_row_list = List::new(bottom_row_items)
+                .block(Block::default().borders(Borders::ALL))
+                .highlight_style(Style::default());
+
+
+
+            // Static blocks
+            f.render_widget(left_top_block, left_column[0]);
+            f.render_widget(left_bottom_block, left_column[1]);
+            f.render_widget(center_search_block, center_column[0]);
+            // f.render_widget(center_main_block, center_column[1]);
+            f.render_widget(right_top_block, right_column[0]);
+            f.render_widget(right_bottom_block, right_column[1]);
+            // f.render_widget(bottom_row_block, chunks[1]);
+            f.render_widget(bottom_row_list, chunks[1]);
+
+            // Dynamic Blocks
+            f.render_widget(search_widget, center_column[0]);
+            f.render_widget(main_content, center_column[1]);
+        })?;
+
+
+        // Match on different types of events
+        match event::read()? {
+            // Handle keyboard events
+            Event::Key(key) => match focused_widget {
+                // Search box is focused
+                Widget::Search => match key.code {
+                    KeyCode::Esc => focused_widget = Widget::Main, // Refocus Main
+                    KeyCode::Char(c) => search_string.push(c), // append character to search string
+                    KeyCode::Backspace => {search_string.pop();}, // remove last character
+                    KeyCode::Enter => {
+                        println!("Search submitted: {}", search_string); // SUBMIT SEARCH STRING...
+                        search_string.clear();
                     }
+                    _ => {} // Handle other keys as needed
+                },
 
-                }
-            },
+                // Default Key handling
+                _ =>  match key.code {
+                    KeyCode::Char('q') => break, // Quit on 'q' press
+                    KeyCode::Char('Q') => break, // Quit on 'Q' press
+                    KeyCode::Esc => break, // Exit on Escape key - We'll see if this is kept
+                    _ => {} // Handle other keys as needed
+                },
 
-            'c' => {
-                // find a way to display the completion status of todos
-                let name_to_complete: String = Input::new()
-                    .with_prompt("Todo Name to complete?")
-                    .interact_text()
-                    .unwrap();
+            }
 
-                let _ = daylist.complete_todo(name_to_complete.to_lowercase())?;
-            },
 
-            'e' => {
-                //delete and add back
-                let name_to_remove: String = Input::new()
-                    .with_prompt("Todo Name to edit?")
-                    .interact_text()
-                    .unwrap();
-
-                loop {
-                    let _ = daylist.remove_todo(name_to_remove.to_lowercase())?;
-
-                    println!("Edit {}?", name_to_remove);
-                    let confirm: char = Input::new()
-                        .interact_text()
-                        .unwrap();
-
-                    match confirm {
-                        'y' => {
-                            let name: String = Input::new()
-                                .with_prompt("Todo Name?")
-                                .interact_text()
-                                .unwrap();
-                            let notes: String = Input::new()
-                                .with_prompt("Any notes?")
-                                .interact_text()
-                                .unwrap();
-
-                            let todo = Todo::new(name, Some(notes));
-                            let _ = daylist.add_todo(todo.clone())?;
-
-                            println!("updated {} to {}.", name_to_remove, todo.get_name());
-
-                            break;
-                        },
-                        'n' => {
-                            let _ = term.write_line("nothing changed");
-                            break;
-                        },
-                        _ => {
-                            let _ = term.write_line("Invalid response, try again");
-                        }
-
+            // Handle Mouse events
+            Event::Mouse(mouse_event) => match focused_widget {
+                Widget::Main => match mouse_event.kind {
+                    crossterm::event::MouseEventKind::Down(button) => {
+                        //button, mouse_event.column, mouse_event.row
                     }
-                }
+                    crossterm::event::MouseEventKind::Up(button) => {
+                        // button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::Drag(button) => {
+                        // button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::ScrollUp => {
+                        //mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::ScrollDown => {
+                        //mouse_event.column, mouse_event.row
+                    }
+                    _ => {}
+                },
+                
+                // Default Mouse handling
+                _ => match mouse_event.kind {
+                    crossterm::event::MouseEventKind::Down(button) => {
+                        //button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::Up(button) => {
+                        // button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::Drag(button) => {
+                        // button, mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::ScrollUp => {
+                        //mouse_event.column, mouse_event.row
+                    }
+                    crossterm::event::MouseEventKind::ScrollDown => {
+                        //mouse_event.column, mouse_event.row
+                    }
+                    _ => {}
+                },
             },
-        */
 
-            'x' => break,
-            'q' => break,
-            _ => println!("invalid input, try again"),
+            // Handle terminal resize if needed
+            Event::Resize(width, height) => {
+                // Draw large resizing message
+                println!("Terminal resized to {}x{}", width, height); // tmp
+            }
+            _ => {}
         }
-
-
-
     }
 
-    println!("Running Tests...");
-    db_read();
 
+    // Cleanup
+    disable_raw_mode()?;
+    crossterm::execute!(terminal.backend_mut(), DisableMouseCapture)?;
+    terminal.show_cursor()?;
 
     Ok(())
-}
-
-
-
-fn db_read() {
-// -- Read
-    use DayList::schema;
-    use DayList::establish_connection;
-    use DayList::models::NewTodo;
-    use DayList::models::Todo;
-
-    let connection = &mut establish_connection();
-    let results = schema::todo::table
-        .select(Todo::as_select())
-        .load(connection)
-        .expect("Error loading todos");
-
-    println!("Displaying {} todos", results.len());
-    for t in results {
-        println!("{}", t.title);
-        println!("-----------\n");
-        println!("{}", t.description.unwrap());
-    }
-    
-
-}
-
-fn db_create() {
-    // -- Create
-    use DayList::schema;
-    use DayList::establish_connection;
-    use DayList::models::NewTodo;
-    use DayList::models::Todo;
-
-    let mut title = String::from("New todo");
-    let mut description = String::from("I am testing the db");
-    let mut completed = false;
-
-    let new_todo = NewTodo { 
-        title: title, 
-        description: Some(description), 
-        completed: false, 
-        parent_todo_id: None 
-    };
-    let connection = &mut establish_connection();
-
-    diesel::insert_into(schema::todo::table)
-        .values(&new_todo)
-        .execute(connection)
-        .expect("Error saving new todo");
-}
-
-fn db_update() {
-// -- Update
-    use DayList::schema;
-    use DayList::establish_connection;
-    use DayList::models::NewTodo;
-    use DayList::models::Todo;
-
-    let connection = &mut establish_connection();
-    let id = 1;
-
-    let todo = diesel::update(schema::todo::table.find(id))
-        .set(schema::todo::completed.eq(true))
-        .execute(connection)
-        .unwrap();
-    // println!("Completed '{}'", todo.title);
-
-
-}
-
-fn db_delete() {
-    // -- Delete
-    use DayList::schema;
-    use DayList::establish_connection;
-    use DayList::models::NewTodo;
-    use DayList::models::Todo;
-
-    let connection = &mut establish_connection();
-    let target = String::from("test");
-    let pattern = format!("%{}%", target);
-
-    let num_deleted = diesel::delete(schema::todo::table.filter(schema::todo::title.like(pattern)))
-        .execute(connection)
-        .expect("Error deleting posts");
-
-    println!("Deleted {} todos", num_deleted);
-
 }
 

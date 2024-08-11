@@ -163,8 +163,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             }
 
+
+            // Handle Mouse events
             Event::Mouse(mouse_event) => match focused_widget {
-                // Handle mouse events 
                 Widget::Main => match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
                         //button, mouse_event.column, mouse_event.row
