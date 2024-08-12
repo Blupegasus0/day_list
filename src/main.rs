@@ -180,6 +180,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         main_content_string = db::search(&search_string);
                         search_string.clear();
                     }
+
                     KeyCode::Up => focused_widget = focused_widget.up(),
                     KeyCode::Down => focused_widget = focused_widget.down(),
                     KeyCode::Left => focused_widget = focused_widget.left(),
@@ -192,6 +193,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('q') => break, // Quit on 'q' press
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => break, // Exit on Escape key - We'll see if this is kept
+
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
                     KeyCode::Char('j') => focused_widget = focused_widget.down(),
                     KeyCode::Char('h') => focused_widget = focused_widget.left(),
@@ -206,12 +208,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
 
 
-            // Handle GENERAL Mouse events
-            Event::Mouse(mouse_event) => {
-                match mouse_event.kind {
+            Event::Mouse(mouse_event) => match focused_widget {
+                // Default Mouse handling
+                _ => match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
                         //button, mouse_event.column, mouse_event.row
-                        
+
                         // Check if the mouse click is within the bounds of the search bar
                         if mouse_event.column >= search_bounds.x
                         && mouse_event.column < search_bounds.x + search_bounds.width
@@ -230,7 +232,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         }
                     }
                     _ => {}
-                } 
+
+                }
             },
 
             // Handle terminal resize if needed
@@ -240,35 +243,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             _ => {}
         }
-
-        /* still a BUG :(
-        match event::read()? {
-            // Handle Focus Specific Mouse events
-            Event::Mouse(mouse_event) => match focused_widget {
-                Widget::Main => match mouse_event.kind {
-                    crossterm::event::MouseEventKind::Down(button) => {
-                        //button, mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::Up(button) => {
-                        // button, mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::Drag(button) => {
-                        // button, mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::ScrollUp => {
-                        //mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::ScrollDown => {
-                        //mouse_event.column, mouse_event.row
-                    }
-                    _ => {} // Default mouse_event.kind
-                },
-                _ => {} // Default focused_widget
-            },
-            _ => {}, // default Event
-
-        } //match event::read()
-        */
 
     } //running loop
 
