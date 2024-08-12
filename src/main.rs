@@ -163,7 +163,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char(c) => search_string.push(c), // append character to search string
                     KeyCode::Backspace => {search_string.pop();}, // remove last character
                     KeyCode::Enter => {
-                        println!("Search submitted: {}", search_string); // SUBMIT SEARCH STRING...
+                        // SUBMIT SEARCH STRING...
+                        main_content_string = db::search(&search_string);
                         search_string.clear();
                     }
                     _ => {} // Handle other keys as needed
