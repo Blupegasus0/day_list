@@ -39,6 +39,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut focused_widget = Widget::Main; 
         focused_widget = Widget::Search; // TEMP
     
+    // Widget Boundaries
+    let mut search_bounds = Rect::default();
+    let mut main_bounds = Rect::default();
+    let mut calendar_bounds = Rect::default();
+    let mut upcoming_bounds = Rect::default();
+    
     // Initialize widget content 
     main_content_string = db::read();
 
@@ -118,13 +124,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
 
             // State Assignments
-            let search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
-                .borders(Borders::ALL))
-                .style(Style::default().fg(Color::Yellow));
+            let mut search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
+                .borders(Borders::ALL));
 
-            let main_content = Paragraph::new(main_content_string.as_ref()).block(Block::default().title("Search")
-                .borders(Borders::ALL))
-                .style(Style::default().fg(Color::Yellow));
+            let mut main_content = Paragraph::new(main_content_string.as_ref()).block(Block::default().title("Daylist")
+                .borders(Borders::ALL));
 
             // A list for the bottom row showing keyboard shortcuts
             let bottom_row_items = vec![
@@ -136,6 +140,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .highlight_style(Style::default());
 
 
+            // Display the focused widget
+            match focused_widget {
+                Widget::Main => main_content = main_content.style(Style::default().fg(Color::Yellow)),
+                Widget::Search => search_widget = search_widget.style(Style::default().fg(Color::Yellow)),
+                _ => main_content = main_content.style(Style::default().fg(Color::Yellow)),
+            };
+
+            // Update boundaries
+            search_bounds = center_column[0];
+            main_bounds = center_column[1];
+            upcoming_bounds = right_column[0];
+            calendar_bounds = right_column[1];
 
             // Static blocks
             f.render_widget(left_top_block, left_column[0]);
@@ -181,7 +197,34 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
 
 
-            // Handle Mouse events
+            // Handle GENERAL Mouse events
+            Event::Mouse(mouse_event) => {
+                match mouse_event.kind {
+                    crossterm::event::MouseEventKind::Down(button) => {
+                        //button, mouse_event.column, mouse_event.row
+                        
+                        // Check if the mouse click is within the bounds of the search bar
+                        if mouse_event.column >= search_bounds.x
+                        && mouse_event.column < search_bounds.x + search_bounds.width
+                        && mouse_event.row >= search_bounds.y
+                        && mouse_event.row < search_bounds.y + search_bounds.height
+                        {
+                            focused_widget = Widget::Search;
+                        }
+
+                        if mouse_event.column >= main_bounds.x
+                        && mouse_event.column < main_bounds.x + main_bounds.width
+                        && mouse_event.row >= main_bounds.y
+                        && mouse_event.row < main_bounds.y + main_bounds.height
+                        {
+                            focused_widget = Widget::Main;
+                        }
+                    }
+                    _ => {}
+                } 
+            }
+            
+            // Handle Focus Specific Mouse events
             Event::Mouse(mouse_event) => match focused_widget {
                 Widget::Main => match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
@@ -201,7 +244,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     _ => {}
                 },
-                
+
                 // Default Mouse handling
                 _ => match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
