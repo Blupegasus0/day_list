@@ -112,11 +112,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let left_top_block = Block::default().title("Left Top").borders(Borders::ALL);
             let left_bottom_block = Block::default().title("Left Bottom").borders(Borders::ALL);
 
-            let center_search_block = Block::default().title("Search").borders(Borders::ALL);
-            let center_main_block = Block::default().title("MyDaylist").borders(Borders::ALL);
+            // let center_search_block = Block::default().title("Search").borders(Borders::ALL);
+            // let center_main_block = Block::default().title("MyDaylist").borders(Borders::ALL);
 
-            let right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
-            let right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
+            let mut right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
+            let mut right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
 
             // State Assignments
             let mut search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
@@ -139,6 +139,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             match focused_widget {
                 Widget::Main => main_content = main_content.style(Style::default().fg(Color::Yellow)),
                 Widget::Search => search_widget = search_widget.style(Style::default().fg(Color::Yellow)),
+                Widget::Calendar => right_bottom_block = right_bottom_block.style(Style::default().fg(Color::Yellow)),
+                Widget::Upcoming => right_top_block = right_top_block.style(Style::default().fg(Color::Yellow)),
                 _ => main_content = main_content.style(Style::default().fg(Color::Yellow)),
             };
 
@@ -151,7 +153,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Static blocks
             f.render_widget(left_top_block, left_column[0]);
             f.render_widget(left_bottom_block, left_column[1]);
-            f.render_widget(center_search_block, center_column[0]);
+            // f.render_widget(center_search_block, center_column[0]);
             // f.render_widget(center_main_block, center_column[1]);
             f.render_widget(right_top_block, right_column[0]);
             f.render_widget(right_bottom_block, right_column[1]);
@@ -178,6 +180,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                         main_content_string = db::search(&search_string);
                         search_string.clear();
                     }
+                    KeyCode::Up => focused_widget = focused_widget.up(),
+                    KeyCode::Down => focused_widget = focused_widget.down(),
+                    KeyCode::Left => focused_widget = focused_widget.left(),
+                    KeyCode::Right => focused_widget = focused_widget.right(),
                     _ => {} // Handle other keys as needed
                 },
 
@@ -186,8 +192,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('q') => break, // Quit on 'q' press
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => break, // Exit on Escape key - We'll see if this is kept
-                    KeyCode::Char('j') => focused_widget = focused_widget.up(),
-                    KeyCode::Char('k') => focused_widget = focused_widget.down(),
+                    KeyCode::Char('k') => focused_widget = focused_widget.up(),
+                    KeyCode::Char('j') => focused_widget = focused_widget.down(),
                     KeyCode::Char('h') => focused_widget = focused_widget.left(),
                     KeyCode::Char('l') => focused_widget = focused_widget.right(),
                     KeyCode::Up => focused_widget = focused_widget.up(),
@@ -235,6 +241,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => {}
         }
 
+        /* still a BUG :(
         match event::read()? {
             // Handle Focus Specific Mouse events
             Event::Mouse(mouse_event) => match focused_widget {
@@ -261,6 +268,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => {}, // default Event
 
         } //match event::read()
+        */
+
     } //running loop
 
 
