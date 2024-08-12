@@ -28,7 +28,6 @@ pub mod db {
             .expect("Error loading todos");
 
         let mut output_string = String::new();
-        output_string.push_str(format!("Displaying {} todos\n", results.len()).as_ref());
         for t in results {
             output_string.push_str(format!("\n{}\n", t.title).as_ref());
             output_string.push_str(format!("-----------\n").as_ref());
@@ -48,7 +47,7 @@ pub mod db {
             .expect("Error loading todos");
 
         let mut output_string = String::new();
-        output_string.push_str(format!("Found {} todos matching '{}'", results.len(), target).as_ref());
+        output_string.push_str(format!("Found {} todos matching '{}'\n", results.len(), target).as_ref());
         for t in results {
             output_string.push_str(format!("\n{}\n", t.title).as_ref());
             output_string.push_str(format!("{}\n", t.description.unwrap()).as_ref());
@@ -105,4 +104,52 @@ pub mod db {
 
     }
 
+}
+
+pub mod nav {
+    pub enum Widget {
+        Calendar,
+        Main,
+        Search,
+        Upcoming,
+    }
+
+    impl Widget {
+        pub fn up(&self) -> Widget {
+            match &self {
+                Widget::Calendar => Widget::Upcoming,
+                Widget::Main => Widget::Search,
+                Widget::Search => Widget::Search,
+                Widget::Upcoming => Widget::Upcoming,
+                _ => Widget::Main,
+            }
+        }
+        pub fn down(&self) -> Widget {
+            match &self {
+                Widget::Calendar => Widget::Calendar,
+                Widget::Main => Widget::Main,
+                Widget::Search => Widget::Main,
+                Widget::Upcoming => Widget::Calendar,
+                _ => Widget::Main,
+            }
+        }
+        pub fn left(&self) -> Widget {
+            match &self {
+                Widget::Calendar => Widget::Main,
+                Widget::Main => Widget::Main, // Not implemented yet
+                Widget::Search => Widget::Search, // Not implemented yet,
+                Widget::Upcoming => Widget::Main,
+                _ => Widget::Main,
+            }
+        }
+        pub fn right(&self) -> Widget {
+            match &self {
+                Widget::Calendar => Widget::Calendar,
+                Widget::Main => Widget::Calendar,
+                Widget::Search => Widget::Upcoming,
+                Widget::Upcoming => Widget::Upcoming,
+                _ => Widget::Main,
+            }
+        }
+    }
 }

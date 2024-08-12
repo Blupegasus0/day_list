@@ -15,13 +15,8 @@ use diesel::sqlite::SqliteConnection;
 use chrono;
 
 use DayList::db;
+use DayList::nav::Widget;
 
-enum Widget {
-    Calendar,
-    Main,
-    Search,
-    Upcoming,
-}
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -191,7 +186,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('q') => break, // Quit on 'q' press
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => break, // Exit on Escape key - We'll see if this is kept
-                    _ => {} // Handle other keys as needed
+                    KeyCode::Char('j') => focused_widget = focused_widget.up(),
+                    KeyCode::Char('k') => focused_widget = focused_widget.down(),
+                    KeyCode::Char('h') => focused_widget = focused_widget.left(),
+                    KeyCode::Char('l') => focused_widget = focused_widget.right(),
+                    KeyCode::Up => focused_widget = focused_widget.up(),
+                    KeyCode::Down => focused_widget = focused_widget.down(),
+                    KeyCode::Left => focused_widget = focused_widget.left(),
+                    KeyCode::Right => focused_widget = focused_widget.right(),
+                    _ => {}, // Handle other keys as needed
                 },
 
             }
@@ -222,8 +225,17 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     _ => {}
                 } 
+            },
+
+            // Handle terminal resize if needed
+            Event::Resize(width, height) => {
+                // Draw large resizing message
+                println!("Terminal resized to {}x{}", width, height); // tmp
             }
-            
+            _ => {}
+        }
+
+        match event::read()? {
             // Handle Focus Specific Mouse events
             Event::Mouse(mouse_event) => match focused_widget {
                 Widget::Main => match mouse_event.kind {
@@ -242,38 +254,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                     crossterm::event::MouseEventKind::ScrollDown => {
                         //mouse_event.column, mouse_event.row
                     }
-                    _ => {}
+                    _ => {} // Default mouse_event.kind
                 },
-
-                // Default Mouse handling
-                _ => match mouse_event.kind {
-                    crossterm::event::MouseEventKind::Down(button) => {
-                        //button, mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::Up(button) => {
-                        // button, mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::Drag(button) => {
-                        // button, mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::ScrollUp => {
-                        //mouse_event.column, mouse_event.row
-                    }
-                    crossterm::event::MouseEventKind::ScrollDown => {
-                        //mouse_event.column, mouse_event.row
-                    }
-                    _ => {}
-                },
+                _ => {} // Default focused_widget
             },
+            _ => {}, // default Event
 
-            // Handle terminal resize if needed
-            Event::Resize(width, height) => {
-                // Draw large resizing message
-                println!("Terminal resized to {}x{}", width, height); // tmp
-            }
-            _ => {}
-        }
-    }
+        } //match event::read()
+    } //running loop
 
 
     // Cleanup
@@ -282,5 +270,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     terminal.show_cursor()?;
 
     Ok(())
-}
+} //main
 
