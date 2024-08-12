@@ -28,9 +28,9 @@ pub mod db {
             .expect("Error loading todos");
 
         let mut output_string = String::new();
-        output_string.push_str(format!("Displaying {} todos", results.len()).as_ref());
+        output_string.push_str(format!("Displaying {} todos\n", results.len()).as_ref());
         for t in results {
-            output_string.push_str(format!("{}\n", t.title).as_ref());
+            output_string.push_str(format!("\n{}\n", t.title).as_ref());
             output_string.push_str(format!("-----------\n").as_ref());
             output_string.push_str(format!("{}\n", t.description.unwrap()).as_ref());
         }
@@ -48,9 +48,9 @@ pub mod db {
             .expect("Error loading todos");
 
         let mut output_string = String::new();
-        output_string.push_str(format!("Found {} todos matching {}", results.len(), target).as_ref());
+        output_string.push_str(format!("Found {} todos matching '{}'", results.len(), target).as_ref());
         for t in results {
-            output_string.push_str(format!("{}\n", t.title).as_ref());
+            output_string.push_str(format!("\n{}\n", t.title).as_ref());
             output_string.push_str(format!("{}\n", t.description.unwrap()).as_ref());
         }
         output_string
