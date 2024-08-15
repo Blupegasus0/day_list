@@ -112,12 +112,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             let left_top_block = Block::default().title("Left Top").borders(Borders::ALL);
             let left_bottom_block = Block::default().title("Left Bottom").borders(Borders::ALL);
 
-            // let center_search_block = Block::default().title("Search").borders(Borders::ALL);
-            // let center_main_block = Block::default().title("MyDaylist").borders(Borders::ALL);
-
-            let mut right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
-            let mut right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
-
             // State Assignments
             let mut search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
@@ -125,12 +119,24 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut main_content = Paragraph::new(main_content_string.as_ref()).block(Block::default().title("Daylist")
                 .borders(Borders::ALL));
 
+            let mut right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
+            let mut right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
+
+
             // A list for the bottom row showing keyboard shortcuts
             let bottom_row_items = vec![
                 ListItem::new(Span::raw("q: Quit")),
                 ListItem::new(Span::raw("h: Help")),
             ];
             let bottom_row_list = List::new(bottom_row_items)
+                .block(Block::default().borders(Borders::ALL))
+                .highlight_style(Style::default());
+
+            let daylist_items = vec![
+                ListItem::new(Span::raw("")),
+                ListItem::new(Span::raw("")),
+            ];
+            let daylist_todos = List::new(daylist_items)
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
