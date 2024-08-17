@@ -19,9 +19,8 @@ pub mod db {
             .expect(&format!("Error connecting to {}", database_url))
     }
 
-    pub fn read() -> String {
+    pub fn read(connection: &mut SqliteConnection) -> String {
         // -- Read
-        let connection = &mut establish_connection();
         let results = schema::todo::table
             .select(Todo::as_select())
             .load(connection)
@@ -36,11 +35,18 @@ pub mod db {
         output_string
     }
 
-    pub fn search(target: &String) -> String {
+    pub fn fetch_todos(conn: &mut SqliteConnection, offset: i64, limit: i64) -> Vec<Todo> {
+        schema::todo::table
+            .limit(limit)
+            .offset(offset)
+            .load::<Todo>(conn)
+            .expect("Error loading items")
+    }
+
+    pub fn search(connection: &mut SqliteConnection, target: &String) -> String {
         // -- Read
         let pattern = format!("%{}%", target);
 
-        let connection = &mut establish_connection();
         let results = schema::todo::table
             .filter(schema::todo::title.like(pattern))
             .load::<Todo>(connection)
@@ -56,7 +62,7 @@ pub mod db {
     }
 
 
-    pub fn create() {
+    pub fn create(connection: &mut SqliteConnection) {
         // -- Create
         let mut title = String::from("New todo");
         let mut description = String::from("I am testing the db");
@@ -68,7 +74,6 @@ pub mod db {
             completed: false, 
             parent_todo_id: None 
         };
-        let connection = &mut establish_connection();
 
         diesel::insert_into(schema::todo::table)
             .values(&new_todo)
@@ -76,9 +81,8 @@ pub mod db {
             .expect("Error saving new todo");
     }
 
-    pub fn update() {
+    pub fn update(connection: &mut SqliteConnection) {
         // -- Update
-        let connection = &mut establish_connection();
         let id = 1;
 
         let todo = diesel::update(schema::todo::table.find(id))
@@ -90,9 +94,8 @@ pub mod db {
 
     }
 
-    pub fn delete() {
+    pub fn delete(connection: &mut SqliteConnection) {
         // -- Delete
-        let connection = &mut establish_connection();
         let target = String::from("test");
         let pattern = format!("%{}%", target);
 
@@ -107,6 +110,11 @@ pub mod db {
 }
 
 pub mod nav {
+    pub enum Content {
+        Search_Results,
+        Daylist,
+    }
+
     pub enum Widget {
         Calendar,
         Main,
@@ -149,6 +157,26 @@ pub mod nav {
                 Widget::Search => Widget::Upcoming,
                 Widget::Upcoming => Widget::Upcoming,
                 _ => Widget::Main,
+            }
+        }
+    }
+}
+
+
+pub mod state {
+    struct Daylist_State {
+        search_string: String,
+        main_context_string: String,
+        // ...
+    }
+    
+    impl Daylist_State {
+        pub fn init() -> Daylist_State {
+            // do a bunch of calculations...
+
+            Daylist_State {
+                search_string: String::new(),
+                main_context_string: String::new(),
             }
         }
     }

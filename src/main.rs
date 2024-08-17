@@ -16,6 +16,7 @@ use chrono;
 
 use DayList::db;
 use DayList::nav::Widget;
+use DayList::nav::Content;
 
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -26,13 +27,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     terminal.clear()?;
+    
+    //let state = state::init(); // Implement when the state is finalized
 
+    // database conncection
+    let connection = &mut db::establish_connection();
 
     // State
     let mut search_string = String::new();
-    let mut main_content_string = String::from("test");
+    let mut search_results = vec![ListItem::new("")];
     let mut focused_widget = Widget::Main; 
-        focused_widget = Widget::Search; // TEMP
+    let mut main_content_shown = Content::Daylist;
+    let mut todo_items_limit = 10; // the amount of items displayed should depend
+    let mut todo_items_offset = 0;
     
     // Widget Boundaries
     let mut search_bounds = Rect::default();
@@ -40,8 +47,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut calendar_bounds = Rect::default();
     let mut upcoming_bounds = Rect::default();
     
-    // Initialize widget content 
-    main_content_string = db::read();
 
     loop {
         terminal.draw(|f| {
@@ -116,7 +121,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
 
-            let mut main_content = Paragraph::new(main_content_string.as_ref()).block(Block::default().title("Daylist")
+            let mut main_content = List::new([ListItem::new("")].to_vec()).block(Block::default().title("Daylist")
                 .borders(Borders::ALL));
 
             let mut right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
@@ -132,10 +137,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
-            let daylist_items = vec![
-                ListItem::new(Span::raw("")),
-                ListItem::new(Span::raw("")),
-            ];
+            let mut daylist_items: Vec<ListItem> = Vec::new();
+            // ERROR I can be looping this shit
+            for todo in db::fetch_todos(connection, todo_items_offset, todo_items_limit) {
+                let todo_item = format!("{}\n{}", todo.title, 
+                    match todo.description {
+                        Some(s) => s,
+                        None => "--".to_string(),
+                    } 
+                );
+                daylist_items.push(ListItem::new(todo_item))
+            }
+
             let daylist_todos = List::new(daylist_items)
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
@@ -149,6 +162,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Widget::Upcoming => right_top_block = right_top_block.style(Style::default().fg(Color::Yellow)),
                 _ => main_content = main_content.style(Style::default().fg(Color::Yellow)),
             };
+
+            match main_content_shown {
+                Content::Daylist => main_content = daylist_todos,
+                // this is maddness ERROR
+                Content::Search_Results => main_content = List::new(&*search_results.clone()),
+                _ => {},
+            }
 
             // Update boundaries
             search_bounds = center_column[0];
@@ -168,6 +188,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             // Dynamic Blocks
             f.render_widget(search_widget, center_column[0]);
+            // f.render_widget(main_content, center_column[1]);
             f.render_widget(main_content, center_column[1]);
         })?;
 
@@ -183,7 +204,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Backspace => {search_string.pop();}, // remove last character
                     KeyCode::Enter => {
                         // SUBMIT SEARCH STRING...
-                        main_content_string = db::search(&search_string);
+                        // to be updated to lazy loading
+                        search_results = vec![ListItem::new(db::search(connection, &search_string))];
+                        main_content_shown = Content::Search_Results;
                         search_string.clear();
                     }
 
