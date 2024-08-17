@@ -2,6 +2,7 @@
 db*
 .env
 diesel.toml
+example.db
 
 
 !db.rs
