@@ -3,14 +3,17 @@ pub mod models;
 
 pub mod db {
     use diesel::sqlite::SqliteConnection;
+    // use diesel::r2d2::{self, ConnectionManager};
     use diesel::prelude::*;
     use dotenvy::dotenv;
     use std::env;
+    use std::sync::Arc;
 
     use crate::schema;
     use crate::models::NewTodo;
     use crate::models::Todo;
 
+    
     pub fn establish_connection() -> SqliteConnection {
         dotenv().ok();
 
@@ -183,7 +186,7 @@ pub mod state {
         main_context_string: String,
         // ...
     }
-    
+
     impl Daylist_State {
         pub fn init() -> Daylist_State {
             // do a bunch of calculations...

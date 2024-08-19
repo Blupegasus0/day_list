@@ -1,62 +1,24 @@
-use rusqlite::{Connection, Result};
-use std::io::{self, Write};
+use diesel::r2d2::{self, ConnectionManager, Pool};
+use diesel::sqlite::SqliteConnection;
+use std::env;
 
-/// Function to fetch a batch of items from the database.
-/// Limit the number of items fetched to enable lazy loading.
-fn fetch_items(conn: &Connection, offset: i64, limit: i64) -> Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT item FROM items LIMIT ? OFFSET ?")?;
-    let rows = stmt.query_map([limit, offset], |row| {
-        let item: String = row.get(0)?;
-        Ok(item)
-    })?;
-    
-    let mut items = Vec::new();
-    for item in rows {
-        items.push(item?);
-    }
-    Ok(items)
+type DbPool = Pool<ConnectionManager<SqliteConnection>>;
+
+fn establish_connection_pool(database_url: &str) -> DbPool {
+    let manager = ConnectionManager::<SqliteConnection>::new(database_url);
+    Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.")
 }
 
-/// Function to write items to the terminal.
-fn write_to_terminal(items: &[String]) {
-    for item in items {
-        println!("{}", item);
+fn main() {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let pool = establish_connection_pool(&database_url);
+
+    // Example usage
+    {
+        let conn = pool.get().expect("Failed to get a connection from the pool.");
+        // Perform your CRUD operation here
     }
-}
-
-fn main() -> Result<()> {
-    // Open a connection to the database.
-    let conn = Connection::open("example.db")?;
-
-    let limit = 10;
-    let mut offset = 0;
-
-    loop {
-        // Fetch a batch of items from the database.
-        let items = fetch_items(&conn, offset, limit)?;
-
-        // If no more items are returned, break the loop.
-        if items.is_empty() {
-            println!("No more items to display.");
-            break;
-        }
-
-        // Write the fetched items to the terminal.
-        write_to_terminal(&items);
-
-        // Wait for the user to press Enter to load more items.
-        println!("Press Enter to load more items, or type 'exit' to quit:");
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-
-        if input.trim().eq_ignore_ascii_case("exit") {
-            break;
-        }
-
-        // Increment the offset to fetch the next batch of items.
-        offset += limit;
-    }
-
-    Ok(())
 }
 

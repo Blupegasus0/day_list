@@ -32,6 +32,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // database conncection
     let connection = &mut db::establish_connection();
+    // let pool = establish_connection_pool();
+    // let conn = pool.get().expect("Failed to get a connection from the pool.");
 
     // State
     let mut search_string = String::new();
@@ -144,11 +146,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
+            let search_content = List::new(&*search_results.clone())
+                    .block(Block::default().borders(Borders::ALL))
+                    .highlight_style(Style::default());
+
 
             match main_content_shown {
                 Content::Daylist => main_content = daylist_todos,
                 // this is madness ERROR ...
-                Content::Search_Results => main_content = List::new(&*search_results.clone()),
+                Content::Search_Results => main_content = search_content,
                 _ => {},
             }
 
@@ -190,7 +196,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             Event::Key(key) => match focused_widget {
                 // Search box is focused
                 Widget::Search => match key.code {
-                    KeyCode::Esc => focused_widget = Widget::Main, // Refocus Main
+                    KeyCode::Esc => {
+                        focused_widget = Widget::Main;
+                        main_content_shown = Content::Daylist;
+                    }, 
                     KeyCode::Char(c) => search_string.push(c), // append character to search string
                     KeyCode::Backspace => {search_string.pop();}, // remove last character
                     KeyCode::Enter => {
@@ -206,6 +215,24 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Left => focused_widget = focused_widget.left(),
                     KeyCode::Right => focused_widget = focused_widget.right(),
                     _ => {} // Handle other keys as needed
+                },
+
+                Widget::Main =>  match key.code {
+                    KeyCode::Char('q') => break, // Quit on 'q' press
+                    KeyCode::Char('Q') => break, // Quit on 'Q' press
+                    KeyCode::Esc => main_content_shown = Content::Daylist,
+
+                    KeyCode::Char('L') => focused_widget = focused_widget.right(),
+
+                    KeyCode::Char('k') => focused_widget = focused_widget.up(),
+                    KeyCode::Char('j') => focused_widget = focused_widget.down(),
+                    KeyCode::Char('h') => focused_widget = focused_widget.left(),
+                    KeyCode::Char('l') => focused_widget = focused_widget.right(),
+                    KeyCode::Up => focused_widget = focused_widget.up(),
+                    KeyCode::Down => focused_widget = focused_widget.down(),
+                    KeyCode::Left => focused_widget = focused_widget.left(),
+                    KeyCode::Right => focused_widget = focused_widget.right(),
+                    _ => {}, // Handle other keys as needed
                 },
 
                 // Default Key handling
