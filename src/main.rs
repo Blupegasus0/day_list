@@ -137,22 +137,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
-            let mut daylist_items: Vec<ListItem> = Vec::new();
-            // ERROR I can be looping this shit
-            for todo in db::fetch_todos(connection, todo_items_offset, todo_items_limit) {
-                let todo_item = format!("{}\n{}", todo.title, 
-                    match todo.description {
-                        Some(s) => s,
-                        None => "--".to_string(),
-                    } 
-                );
-                daylist_items.push(ListItem::new(todo_item))
-            }
+            // ERROR Still cant be looping this
+            let mut daylist_items = db::fetch_todos(connection, todo_items_offset, todo_items_limit);
 
             let daylist_todos = List::new(daylist_items)
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
+
+            match main_content_shown {
+                Content::Daylist => main_content = daylist_todos,
+                // this is madness ERROR ...
+                Content::Search_Results => main_content = List::new(&*search_results.clone()),
+                _ => {},
+            }
 
             // Display the focused widget
             match focused_widget {
@@ -162,13 +160,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Widget::Upcoming => right_top_block = right_top_block.style(Style::default().fg(Color::Yellow)),
                 _ => main_content = main_content.style(Style::default().fg(Color::Yellow)),
             };
-
-            match main_content_shown {
-                Content::Daylist => main_content = daylist_todos,
-                // this is maddness ERROR
-                Content::Search_Results => main_content = List::new(&*search_results.clone()),
-                _ => {},
-            }
 
             // Update boundaries
             search_bounds = center_column[0];

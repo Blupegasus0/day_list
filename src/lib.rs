@@ -35,12 +35,26 @@ pub mod db {
         output_string
     }
 
-    pub fn fetch_todos(conn: &mut SqliteConnection, offset: i64, limit: i64) -> Vec<Todo> {
-        schema::todo::table
+    use tui::widgets::{List, ListItem};
+    pub fn fetch_todos(conn: &mut SqliteConnection, offset: i64, limit: i64) -> Vec<ListItem> {
+        let results = schema::todo::table
             .limit(limit)
             .offset(offset)
             .load::<Todo>(conn)
-            .expect("Error loading items")
+            .expect("Error loading items");
+
+        let mut list: Vec<ListItem> = Vec::new();
+
+        for todo in results {
+            let todo_item = format!("{}\n{}\n", todo.title, 
+                match todo.description {
+                    Some(s) => s,
+                    None => "--".to_string(),
+                } 
+            );
+            list.push(ListItem::new(todo_item))
+        }
+        list
     }
 
     pub fn search(connection: &mut SqliteConnection, target: &String) -> String {
