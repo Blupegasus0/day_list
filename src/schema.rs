@@ -13,10 +13,10 @@ diesel::table! {
         id -> Integer,
         title -> Text,
         description -> Nullable<Text>,
-        date_created -> Nullable<Text>,
+        //date_created -> Nullable<Text>,
         completed -> Bool,
-        due_date -> Nullable<Text>,
-        reminder_date -> Nullable<Text>,
+        //due_date -> Nullable<Text>,
+        //reminder_date -> Nullable<Text>,
         parent_todo_id -> Nullable<Integer>,
     }
 }
