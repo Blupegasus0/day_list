@@ -6,7 +6,7 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::backend::{Backend, CrosstermBackend};
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Style};
-use tui::widgets::{Block, Borders, Paragraph, List, ListItem};
+use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 use tui::text::{Spans, Span};
 use tui::Terminal;
 use console::Term;
@@ -31,17 +31,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
-    let connection = &mut db::establish_connection();
-    // let pool = establish_connection_pool();
-    // let conn = pool.get().expect("Failed to get a connection from the pool.");
+    // let connection = &mut db::establish_connection();
+    let pool = db::establish_connection_pool();
+    let mut conn = pool.get().expect("Failed to get a connection from the pool.");
 
     // State
     let mut search_string = String::new();
     let mut search_results = vec![ListItem::new("")];
+
     let mut focused_widget = Widget::Main; 
     let mut main_content_shown = Content::Daylist;
+
     let mut todo_items_limit = 10; // the amount of items displayed should depend
     let mut todo_items_offset = 0;
+    let mut daylist_items = vec![ListItem::new("")];
     
     // Widget Boundaries
     let mut search_bounds = Rect::default();
@@ -129,31 +132,31 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut right_top_block = Block::default().title("Upcoming").borders(Borders::ALL);
             let mut right_bottom_block = Block::default().title("Calendar").borders(Borders::ALL);
 
-
             // A list for the bottom row showing keyboard shortcuts
-            let bottom_row_items = vec![
-                ListItem::new(Span::raw("q: Quit")),
-                ListItem::new(Span::raw("h: Help")),
-            ];
-            let bottom_row_list = List::new(bottom_row_items)
+            let row = Row::new(vec![
+                Cell::from("q|Quit"),
+                Cell::from("h|Help"),
+            ]).style(Style::default().fg(Color::Yellow));
+
+            let bottom_row_list = Table::new(vec![row])
+                .block(Block::default().borders(Borders::ALL))
+                .widths(&[
+                    Constraint::Percentage(25),
+                    Constraint::Percentage(25),
+            ]);
+
+
+            let daylist_todos = List::new(daylist_items.clone())
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
-            // ERROR Still cant be looping this
-            let mut daylist_items = db::fetch_todos(connection, todo_items_offset, todo_items_limit);
-
-            let daylist_todos = List::new(daylist_items)
+            let search_content = List::new(search_results.clone())
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
-
-            let search_content = List::new(&*search_results.clone())
-                    .block(Block::default().borders(Borders::ALL))
-                    .highlight_style(Style::default());
 
 
             match main_content_shown {
                 Content::Daylist => main_content = daylist_todos,
-                // this is madness ERROR ...
                 Content::Search_Results => main_content = search_content,
                 _ => {},
             }
@@ -205,7 +208,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Enter => {
                         // SUBMIT SEARCH STRING...
                         // to be updated to lazy loading
-                        search_results = vec![ListItem::new(db::search(connection, &search_string))];
+                        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                        search_results = vec![ListItem::new(db::search(&mut conn, &search_string))];
                         main_content_shown = Content::Search_Results;
                         search_string.clear();
                     }
@@ -222,7 +226,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => main_content_shown = Content::Daylist,
 
-                    KeyCode::Char('L') => focused_widget = focused_widget.right(),
+                    KeyCode::Char('L') => daylist_items = db::fetch_todos(&mut conn, todo_items_offset, todo_items_limit),
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
                     KeyCode::Char('j') => focused_widget = focused_widget.down(),
