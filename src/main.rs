@@ -7,7 +7,7 @@ use tui::backend::{Backend, CrosstermBackend};
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
-use tui::text::{Spans, Span};
+// use tui::text::{Spans, Span};
 use tui::Terminal;
 use console::Term;
 use diesel::prelude::*;
@@ -151,10 +151,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Constraint::Percentage(10),
             ]);
 
-            let edit_string = format!("mf{}\n\n{}",todo_name, todo_description);
-            let mut edit_item = vec![ListItem::new(edit_string)];
+            let edit_string = format!("Title: {}\n-----\nDescription: {}",todo_name, todo_description);
+            let edit_item = vec![ListItem::new(edit_string)];
 
-            let edit_todo = List::new(edit_item.clone())
+            let edit_todo = List::new(edit_item)
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
@@ -241,7 +241,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                     KeyCode::Char('L') => daylist_items = db::fetch_todos(&mut conn, todo_items_offset, todo_items_limit),
 
-                    KeyCode::Char('n') => {focused_widget = Widget::Edit_Todo;}
+                    KeyCode::Char('n') => {
+                        focused_widget = Widget::Edit_Todo; 
+                        main_content_shown = Content::Edit_Todo;
+                    }
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
                     KeyCode::Char('j') => focused_widget = focused_widget.down(),
@@ -255,10 +258,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 },
 
                 Widget::Edit_Todo => match key.code {
-                    KeyCode::Char('q') => break, // Quit on 'q' press
-                    KeyCode::Char('Q') => break, // Quit on 'Q' press
-                    KeyCode::Esc => main_content_shown = Content::Daylist,
-
+                    KeyCode::Esc => {
+                        main_content_shown = Content::Daylist;
+                        focused_widget = Widget::Main;
+                        todo_name.clear();
+                        todo_description.clear();
+                    },
                     KeyCode::Backspace => {
                         if todo_name_selected {todo_name.pop();}
                         else {todo_description.pop();}
@@ -269,8 +274,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                         } else {
                             // Add todo 
                             let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                            search_results = vec![ListItem::new(db::search(&mut conn, &search_string))];
+                            db::create(&mut conn, todo_name.clone(), todo_description.clone());
+
                             main_content_shown = Content::Daylist;
+                            focused_widget = Widget::Main;
+
                             todo_name.clear();
                             todo_description.clear();
                         }
@@ -279,9 +287,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char(c) => {
                         if todo_name_selected {todo_name.push(c);}
                         else {todo_description.push(c);}
-                        println!("{todo_name}");
-                    }, // remove last character
-                    
+                    }, 
+
                     KeyCode::Up => focused_widget = focused_widget.up(),
                     KeyCode::Down => focused_widget = focused_widget.down(),
                     KeyCode::Left => focused_widget = focused_widget.left(),
@@ -317,17 +324,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                         // Check if the mouse click is within the bounds of the search bar
                         if mouse_event.column >= search_bounds.x
-                            && mouse_event.column < search_bounds.x + search_bounds.width
-                                && mouse_event.row >= search_bounds.y
-                                && mouse_event.row < search_bounds.y + search_bounds.height
+                        && mouse_event.column < search_bounds.x + search_bounds.width
+                        && mouse_event.row >= search_bounds.y
+                        && mouse_event.row < search_bounds.y + search_bounds.height
                         {
                             focused_widget = Widget::Search;
                         }
 
                         if mouse_event.column >= main_bounds.x
-                            && mouse_event.column < main_bounds.x + main_bounds.width
-                                && mouse_event.row >= main_bounds.y
-                                && mouse_event.row < main_bounds.y + main_bounds.height
+                        && mouse_event.column < main_bounds.x + main_bounds.width
+                        && mouse_event.row >= main_bounds.y
+                        && mouse_event.row < main_bounds.y + main_bounds.height
                         {
                             focused_widget = Widget::Main;
                         }

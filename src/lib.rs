@@ -7,7 +7,6 @@ pub mod db {
     use diesel::prelude::*;
     use dotenvy::dotenv;
     use std::env;
-    use std::sync::Arc;
 
     use crate::schema;
     use crate::models::NewTodo;
@@ -61,7 +60,7 @@ pub mod db {
         let mut list: Vec<ListItem> = Vec::new();
 
         for todo in results {
-            let todo_item = format!("{}\n{}\n", todo.title, 
+            let todo_item = format!("\n   {}\n   {}\n", todo.title, 
                 match todo.description {
                     Some(s) => s,
                     None => "--".to_string(),
