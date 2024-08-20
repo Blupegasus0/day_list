@@ -222,7 +222,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         // SUBMIT SEARCH STRING...
                         // to be updated to lazy loading
                         let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                        search_results = vec![ListItem::new(db::search(&mut conn, &search_string))];
+                        search_results = db::search(&mut conn, &search_string);
                         main_content_shown = Content::Search_Results;
                         search_string.clear();
                     }

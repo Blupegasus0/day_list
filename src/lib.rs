@@ -56,9 +56,28 @@ pub mod db {
             .offset(offset)
             .load::<Todo>(conn)
             .expect("Error loading items");
+        
+        format_todos(results)
+    }
 
+    pub fn search(connection: &mut SqliteConnection, target: &String) -> Vec<ListItem<'static>> {
+        // -- Read
+        let pattern = format!("%{}%", target);
+
+        let results = schema::todo::table
+            .filter(schema::todo::title.like(pattern))
+            .load::<Todo>(connection)
+            .expect("Error loading todos");
+
+        let results_found = format!("Found {} todos matching '{}'\n", results.len(), target);
+        let mut search_results = format_todos(results);
+        
+        search_results.insert(0,ListItem::new(results_found));
+        search_results
+    }
+
+    fn format_todos(results: Vec<Todo>) -> Vec<ListItem<'static>> {
         let mut list: Vec<ListItem> = Vec::new();
-
         for todo in results {
             let todo_item = format!("\n   {}\n   {}\n", todo.title, 
                 match todo.description {
@@ -69,24 +88,6 @@ pub mod db {
             list.push(ListItem::new(todo_item))
         }
         list
-    }
-
-    pub fn search(connection: &mut SqliteConnection, target: &String) -> String {
-        // -- Read
-        let pattern = format!("%{}%", target);
-
-        let results = schema::todo::table
-            .filter(schema::todo::title.like(pattern))
-            .load::<Todo>(connection)
-            .expect("Error loading todos");
-
-        let mut output_string = String::new();
-        output_string.push_str(format!("Found {} todos matching '{}'\n", results.len(), target).as_ref());
-        for t in results {
-            output_string.push_str(format!("\n{}\n", t.title).as_ref());
-            output_string.push_str(format!("{}\n", t.description.unwrap()).as_ref());
-        }
-        output_string
     }
 
 
