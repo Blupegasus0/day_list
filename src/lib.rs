@@ -91,12 +91,8 @@ pub mod db {
     }
 
 
-    pub fn create(connection: &mut SqliteConnection) {
+    pub fn create(connection: &mut SqliteConnection, title: String, description: String) -> (String, Option<String>) {
         // -- Create
-        let mut title = String::from("New todo");
-        let mut description = String::from("I am testing the db");
-        let mut completed = false;
-
         let new_todo = NewTodo { 
             title: title, 
             description: Some(description), 
@@ -108,6 +104,8 @@ pub mod db {
             .values(&new_todo)
             .execute(connection)
             .expect("Error saving new todo");
+
+        (new_todo.title,new_todo.description)
     }
 
     pub fn update(connection: &mut SqliteConnection) {
@@ -140,12 +138,14 @@ pub mod db {
 
 pub mod nav {
     pub enum Content {
-        Search_Results,
         Daylist,
+        Edit_Todo,
+        Search_Results,
     }
 
     pub enum Widget {
         Calendar,
+        Edit_Todo,
         Main,
         Search,
         Upcoming,
