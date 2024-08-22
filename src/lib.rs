@@ -209,4 +209,63 @@ pub mod state {
             }
         }
     }
+
+
+    use tui::widgets::ListState;
+    pub struct Todo_List {
+        todos: Vec<String>,
+        state: ListState,
+    }
+
+    impl Todo_List {
+        pub fn new(todos: Vec<String>) -> Todo_List {
+            Todo_List {
+                todos,
+                state: ListState::default(),
+            }
+        }
+
+        pub fn set_todos(&mut self, todos: Vec<String>) {
+            self.todos = todos;
+            self.state = ListState::default(); // Reset the state since the items have changed
+        }
+
+        // Select the next item. This will not be reflected until the widget is drawn in the
+        // `Terminal::draw` callback using `Frame::render_stateful_widget`.
+        pub fn next(&mut self) {
+            let i = match self.state.selected() {
+                Some(i) => {
+                    if i >= self.todos.len() - 1 {
+                        0
+                    } else {
+                        i + 1
+                    }
+                }
+                None => 0,
+            };
+            self.state.select(Some(i));
+        }
+
+        // Select the previous item. This will not be reflected until the widget is drawn in the
+        // `Terminal::draw` callback using `Frame::render_stateful_widget`.
+        pub fn previous(&mut self) {
+            let i = match self.state.selected() {
+                Some(i) => {
+                    if i == 0 {
+                        self.todos.len() - 1
+                    } else {
+                        i - 1
+                    }
+                }
+                None => 0,
+            };
+            self.state.select(Some(i));
+        }
+
+        // Unselect the currently selected item if any. The implementation of `ListState` makes
+        // sure that the stored offset is also reset.
+        pub fn unselect(&mut self) {
+            self.state.select(None);
+        }
+    }
 }
