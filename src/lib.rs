@@ -33,22 +33,6 @@ pub mod db {
             .expect(&format!("Error connecting to {}", database_url))
     }
 
-    pub fn read(connection: &mut SqliteConnection) -> String {
-        // -- Read
-        let results = schema::todo::table
-            .select(Todo::as_select())
-            .load(connection)
-            .expect("Error loading todos");
-
-        let mut output_string = String::new();
-        for t in results {
-            output_string.push_str(format!("\n{}\n", t.title).as_ref());
-            output_string.push_str(format!("-----------\n").as_ref());
-            output_string.push_str(format!("{}\n", t.description.unwrap()).as_ref());
-        }
-        output_string
-    }
-
     use tui::widgets::{List, ListItem};
     use tui::style::{Color, Style};
     pub fn fetch_todos<'a>(pool: DbPool, offset: i64, limit: i64) -> Vec<ListItem<'a>> {
