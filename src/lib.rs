@@ -213,8 +213,8 @@ pub mod state {
 
     use tui::widgets::ListState;
     pub struct Todo_List {
-        todos: Vec<String>,
-        state: ListState,
+        pub todos: Vec<String>,
+        pub state: ListState,
     }
 
     impl Todo_List {

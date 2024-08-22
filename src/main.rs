@@ -17,6 +17,7 @@ use chrono;
 use DayList::db;
 use DayList::nav::Widget;
 use DayList::nav::Content;
+use DayList::state::Todo_List;
 
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -56,6 +57,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut calendar_bounds = Rect::default();
     let mut upcoming_bounds = Rect::default();
     
+    
+    // testing daylist state
+    let mut todo_list = Todo_List::new(vec![
+        String::from("Item 1"),
+        String::from("Item 2")
+    ]);
 
     loop {
         terminal.draw(|f| {
@@ -189,6 +196,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             upcoming_bounds = right_column[0];
             calendar_bounds = right_column[1];
 
+
             // Static blocks
             f.render_widget(left_top_block, left_column[0]);
             f.render_widget(left_bottom_block, left_column[1]);
@@ -203,6 +211,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             f.render_widget(search_widget, center_column[0]);
             // f.render_widget(main_content, center_column[1]);
             f.render_widget(main_content, center_column[1]);
+            
+            // testing Todo_List state
+            let todo_items: Vec<ListItem> = todo_list.todos.iter().map(|i| ListItem::new(i.as_ref())).collect();
+            let list = List::new(todo_items)
+                .block(Block::default().borders(Borders::ALL).title("List"))
+                .highlight_style(Style::default().bg(Color::Yellow).fg(Color::Black)); // Highlight the selected item
+            // Finally the widget is rendered using the associated state. `events.state` is
+            // effectively the only thing that we will "remember" from this draw call.
+            f.render_stateful_widget(list, f.size(), &mut todo_list.state);
         })?;
 
 
@@ -245,6 +262,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         focused_widget = Widget::Edit_Todo; 
                         main_content_shown = Content::Edit_Todo;
                     }
+
+                    KeyCode::Char('p') => todo_list.next(),
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
                     KeyCode::Char('j') => focused_widget = focused_widget.down(),
