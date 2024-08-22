@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut todo_items_limit = 10; // the amount of items displayed should depend
     let mut todo_items_offset = 0;
-    let mut daylist_items = vec![ListItem::new("")];
+    //let mut daylist_items = vec![ListItem::new("")];
     
     // Widget Boundaries
     let mut search_bounds = Rect::default();
@@ -59,10 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     
     // testing daylist state
-    let mut todo_list = Todo_List::new(vec![
-        String::from("Item 1"),
-        String::from("Item 2")
-    ]);
+    let mut todo_list = Todo_List::new(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
 
     loop {
         terminal.draw(|f| {
@@ -148,6 +145,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Cell::from("q|Quit"),
                 Cell::from("h|Help"),
                 Cell::from("n|New todo"),
+                Cell::from("L|List todos"),
+                Cell::from("Tab|Select todo"),
             ]).style(Style::default().fg(Color::Yellow));
 
             let bottom_row_list = Table::new(vec![row])
@@ -156,6 +155,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Constraint::Percentage(10),
                     Constraint::Percentage(10),
                     Constraint::Percentage(10),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(15),
             ]);
 
             let edit_string = format!("Title: {}\n-----\nDescription: {}",todo_name, todo_description);
@@ -165,9 +166,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
-            let daylist_todos = List::new(daylist_items.clone())
-                .block(Block::default().borders(Borders::ALL))
-                .highlight_style(Style::default());
+            let daylist_todos = List::new(todo_list.todos.clone()) // probably suboptimal
+                .block(Block::default().borders(Borders::ALL).title("List"))
+                .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
             let search_content = List::new(search_results.clone())
                 .block(Block::default().borders(Borders::ALL))
@@ -209,17 +210,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             // Dynamic Blocks
             f.render_widget(search_widget, center_column[0]);
-            // f.render_widget(main_content, center_column[1]);
-            f.render_widget(main_content, center_column[1]);
-            
-            // testing Todo_List state
-            let todo_items: Vec<ListItem> = todo_list.todos.iter().map(|i| ListItem::new(i.as_ref())).collect();
-            let list = List::new(todo_items)
-                .block(Block::default().borders(Borders::ALL).title("List"))
-                .highlight_style(Style::default().bg(Color::Yellow).fg(Color::Black)); // Highlight the selected item
-            // Finally the widget is rendered using the associated state. `events.state` is
-            // effectively the only thing that we will "remember" from this draw call.
-            f.render_stateful_widget(list, f.size(), &mut todo_list.state);
+            f.render_stateful_widget(main_content, center_column[1], &mut todo_list.state);
         })?;
 
 
@@ -256,14 +247,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => main_content_shown = Content::Daylist,
 
-                    KeyCode::Char('L') => daylist_items = db::fetch_todos(&mut conn, todo_items_offset, todo_items_limit),
+                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit)),
 
                     KeyCode::Char('n') => {
                         focused_widget = Widget::Edit_Todo; 
                         main_content_shown = Content::Edit_Todo;
                     }
 
-                    KeyCode::Char('p') => todo_list.next(),
+                    KeyCode::Tab => todo_list.next(),
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
                     KeyCode::Char('j') => focused_widget = focused_widget.down(),

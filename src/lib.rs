@@ -50,11 +50,13 @@ pub mod db {
     }
 
     use tui::widgets::{List, ListItem};
-    pub fn fetch_todos(conn: &mut SqliteConnection, offset: i64, limit: i64) -> Vec<ListItem> {
+    use tui::style::{Color, Style};
+    pub fn fetch_todos<'a>(pool: DbPool, offset: i64, limit: i64) -> Vec<ListItem<'a>> {
+        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
         let results = schema::todo::table
             .limit(limit)
             .offset(offset)
-            .load::<Todo>(conn)
+            .load::<Todo>(&mut conn)
             .expect("Error loading items");
         
         format_todos(results)
@@ -85,7 +87,9 @@ pub mod db {
                     None => "--".to_string(),
                 } 
             );
-            list.push(ListItem::new(todo_item))
+            list.push(
+                ListItem::new(todo_item).style(Style::default().fg(Color::DarkGray))
+            )
         }
         list
     }
@@ -211,21 +215,21 @@ pub mod state {
     }
 
 
-    use tui::widgets::ListState;
-    pub struct Todo_List {
-        pub todos: Vec<String>,
+    use tui::widgets::{ListItem, ListState};
+    pub struct Todo_List<'a> {
+        pub todos: Vec<ListItem<'a>>,
         pub state: ListState,
     }
 
-    impl Todo_List {
-        pub fn new(todos: Vec<String>) -> Todo_List {
+    impl<'a> Todo_List<'a> {
+        pub fn new(todos: Vec<ListItem<'a>>) -> Todo_List<'a> {
             Todo_List {
                 todos,
                 state: ListState::default(),
             }
         }
 
-        pub fn set_todos(&mut self, todos: Vec<String>) {
+        pub fn set_todos(&mut self, todos: Vec<ListItem<'a>>) {
             self.todos = todos;
             self.state = ListState::default(); // Reset the state since the items have changed
         }
