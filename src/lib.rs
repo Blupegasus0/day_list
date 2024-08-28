@@ -78,7 +78,6 @@ pub mod db {
         list
     }
 
-
     pub fn create(connection: &mut SqliteConnection, title: String, description: String) -> (String, Option<String>) {
         // -- Create
         let new_todo = NewTodo { 
@@ -96,6 +95,16 @@ pub mod db {
         (new_todo.title,new_todo.description)
     }
 
+    pub fn complete_todo(connection: &mut SqliteConnection, id: i32) {
+        // -- Update
+        let id: i32 = 1;
+
+        let todo = diesel::update(schema::todo::table.find(id))
+            .set(schema::todo::completed.eq(true))
+            .execute(connection)
+            .unwrap();
+    }
+
     pub fn update(connection: &mut SqliteConnection) {
         // -- Update
         let id = 1;
@@ -104,9 +113,6 @@ pub mod db {
             .set(schema::todo::completed.eq(true))
             .execute(connection)
             .unwrap();
-        // println!("Completed '{}'", todo.title);
-
-
     }
 
     pub fn delete(connection: &mut SqliteConnection) {
