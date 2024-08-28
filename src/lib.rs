@@ -46,6 +46,16 @@ pub mod db {
         format_todos(results)
     }
 
+    pub fn fetch_todos2(pool: DbPool, offset: i64, limit: i64) -> Vec<Todo> {
+        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+        let results = schema::todo::table
+            .limit(limit)
+            .offset(offset)
+            .load::<Todo>(&mut conn)
+            .expect("Error loading items");
+        results   
+    }
+
     pub fn search(connection: &mut SqliteConnection, target: &String) -> Vec<ListItem<'static>> {
         // -- Read
         let pattern = format!("%{}%", target);
@@ -62,6 +72,16 @@ pub mod db {
         search_results
     }
 
+    pub fn format_todo(todo: &Todo) -> String {
+        format!("\n   {}\n   {}\n", todo.title, 
+            match todo.description.clone() {
+                Some(s) => s,
+                None => "--".to_string(),
+            } 
+        )
+    }
+
+    // TODO
     fn format_todos(results: Vec<Todo>) -> Vec<ListItem<'static>> {
         let mut list: Vec<ListItem> = Vec::new();
         for todo in results {
@@ -206,20 +226,21 @@ pub mod state {
 
 
     use tui::widgets::{ListItem, ListState};
-    pub struct Todo_List<'a> {
-        pub todos: Vec<ListItem<'a>>,
+    use crate::models::Todo;
+    pub struct Todo_List {
+        pub todos: Vec<Todo>,
         pub state: ListState,
     }
 
-    impl<'a> Todo_List<'a> {
-        pub fn new(todos: Vec<ListItem<'a>>) -> Todo_List<'a> {
+    impl Todo_List {
+        pub fn new(todos: Vec<Todo>) -> Todo_List {
             Todo_List {
                 todos,
                 state: ListState::default(),
             }
         }
 
-        pub fn set_todos(&mut self, todos: Vec<ListItem<'a>>) {
+        pub fn set_todos(&mut self, todos: Vec<Todo>) {
             self.todos = todos;
             self.state = ListState::default(); // Reset the state since the items have changed
         }

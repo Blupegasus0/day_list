@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     
     // testing daylist state
-    let mut todo_list = Todo_List::new(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
+    let mut todo_list = Todo_List::new(db::fetch_todos2(pool.clone(), todo_items_offset, todo_items_limit));
 
     loop {
         terminal.draw(|f| {
@@ -166,7 +166,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
-            let daylist_todos = List::new(todo_list.todos.clone()) // probably suboptimal
+            let daylist_todos = List::new(todo_list.todos.iter().map(|todo| {ListItem::new(db::format_todo(todo))}).collect::<Vec<ListItem<'_>>>()) // probably suboptimal
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
@@ -247,7 +247,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => main_content_shown = Content::Daylist,
 
-                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit)),
+                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos2(pool.clone(), todo_items_offset, todo_items_limit)),
 
                     KeyCode::Char('n') => {
                         focused_widget = Widget::Edit_Todo; 
