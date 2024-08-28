@@ -73,7 +73,12 @@ pub mod db {
     }
 
     pub fn format_todo(todo: &Todo) -> String {
-        format!("\n   {}\n   {}\n", todo.title, 
+        let mut todo_status = "[ ]";
+        if todo.completed {
+            todo_status = "[]";
+        }
+
+        format!("\n   {} {}\n       {}\n",todo_status, todo.title, 
             match todo.description.clone() {
                 Some(s) => s,
                 None => "--".to_string(),
@@ -115,14 +120,31 @@ pub mod db {
         (new_todo.title,new_todo.description)
     }
 
-    pub fn complete_todo(connection: &mut SqliteConnection, id: i32) {
-        // -- Update
-        let id: i32 = 1;
+    pub fn complete_todo(pool: DbPool, id: Option<i32>) {
+        match id {
+            Some(id) => {
+                let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                let todo = diesel::update(schema::todo::table.find(id))
+                    .set(schema::todo::completed.eq(true))
+                    .execute(&mut conn)
+                    .unwrap();
 
-        let todo = diesel::update(schema::todo::table.find(id))
-            .set(schema::todo::completed.eq(true))
-            .execute(connection)
-            .unwrap();
+            }
+            None => {} 
+        }
+    }
+
+    pub fn delete_todo(pool: DbPool, id: Option<i32>) {
+        match id {
+            Some(id) => {
+                let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                let num_deleted = diesel::delete(schema::todo::table.find(id))
+                    .execute(&mut conn)
+                    .expect("Error deleting posts");
+
+            }
+            None => {} 
+        }
     }
 
     pub fn update(connection: &mut SqliteConnection) {
@@ -281,6 +303,15 @@ pub mod state {
         // sure that the stored offset is also reset.
         pub fn unselect(&mut self) {
             self.state.select(None);
+        }
+
+        pub fn get_selected_id(&self) -> Option<i32> {
+            match self.state.selected() {
+                Some(i) => {
+                    Some(self.todos[i].id)
+                }
+                None => None
+            }
         }
     }
 }

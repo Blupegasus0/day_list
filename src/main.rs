@@ -145,6 +145,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Cell::from("q|Quit"),
                 Cell::from("h|Help"),
                 Cell::from("n|New todo"),
+                Cell::from("d|Complete todo"),
+                Cell::from("X|Delete todo"),
                 Cell::from("L|List todos"),
                 Cell::from("Tab|Select todo"),
             ]).style(Style::default().fg(Color::Yellow));
@@ -155,7 +157,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     Constraint::Percentage(10),
                     Constraint::Percentage(10),
                     Constraint::Percentage(10),
-                    Constraint::Percentage(10),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(15),
                     Constraint::Percentage(15),
             ]);
 
@@ -166,7 +169,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
-            let daylist_todos = List::new(todo_list.todos.iter().map(|todo| {ListItem::new(db::format_todo(todo))}).collect::<Vec<ListItem<'_>>>()) // probably suboptimal
+            let daylist_todos = List::new(
+                todo_list.todos.iter()
+                    .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
+                    .collect::<Vec<ListItem<'_>>>()) // probably suboptimal
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
@@ -255,6 +261,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
 
                     KeyCode::Tab => todo_list.next(),
+
+                    KeyCode::Char('d') => {
+                        db::complete_todo(pool.clone(), todo_list.get_selected_id());
+                        todo_list.set_todos(db::fetch_todos2(pool.clone(), todo_items_offset, todo_items_limit));
+                    },
+
+                    KeyCode::Char('X') => {
+                        db::delete_todo(pool.clone(), todo_list.get_selected_id());
+                        todo_list.set_todos(db::fetch_todos2(pool.clone(), todo_items_offset, todo_items_limit));
+                    },
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
                     KeyCode::Char('j') => focused_widget = focused_widget.down(),
