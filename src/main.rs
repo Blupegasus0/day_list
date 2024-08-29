@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io;
 
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
+use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::backend::{Backend, CrosstermBackend};
 use tui::layout::{Constraint, Direction, Layout, Rect};
@@ -260,7 +260,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                         main_content_shown = Content::Edit_Todo;
                     }
 
-                    KeyCode::Tab => todo_list.next(),
+                    KeyCode::Tab => {
+                            if key.modifiers.contains(KeyModifiers::SHIFT) {
+                                todo_list.previous();
+                            } else {
+                                todo_list.next();
+                            }
+                        }
 
                     KeyCode::Char('d') => {
                         db::complete_todo(pool.clone(), todo_list.get_selected_id());
