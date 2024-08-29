@@ -32,7 +32,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
-    // let connection = &mut db::establish_connection();
     let pool = db::establish_connection_pool();
     let mut conn = pool.get().expect("Failed to get a connection from the pool.");
 

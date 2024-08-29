@@ -25,14 +25,6 @@ pub mod db {
     }
 
     
-    pub fn establish_connection() -> SqliteConnection {
-        dotenv().ok();
-
-        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        SqliteConnection::establish(&database_url)
-            .expect(&format!("Error connecting to {}", database_url))
-    }
-
     use tui::widgets::{List, ListItem};
     use tui::style::{Color, Style};
     pub fn fetch_todos<'a>(pool: DbPool, offset: i64, limit: i64) -> Vec<ListItem<'a>> {
