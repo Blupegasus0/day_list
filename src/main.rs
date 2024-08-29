@@ -312,7 +312,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                             todo_name.clear();
                             todo_description.clear();
+                            todo_name_selected = true;
                         }
+                        // Reload todos
+                        todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
                     },
                     //  KeyCode::Tab .... add tab functionality TODO
                     KeyCode::Char(c) => {
