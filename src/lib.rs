@@ -56,13 +56,14 @@ pub mod db {
         results   
     }
 
-    pub fn search(connection: &mut SqliteConnection, target: &String) -> Vec<ListItem<'static>> {
+    pub fn search(pool: DbPool, target: &String) -> Vec<ListItem<'static>> {
         // -- Read
         let pattern = format!("%{}%", target);
 
+        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
         let results = schema::todo::table
             .filter(schema::todo::title.like(pattern))
-            .load::<Todo>(connection)
+            .load::<Todo>(&mut conn)
             .expect("Error loading todos");
 
         let results_found = format!("Found {} todos matching '{}'\n", results.len(), target);
@@ -103,7 +104,7 @@ pub mod db {
         list
     }
 
-    pub fn create(connection: &mut SqliteConnection, title: String, description: String) -> (String, Option<String>) {
+    pub fn create(pool: DbPool, title: String, description: String) -> (String, Option<String>) {
         // -- Create
         let new_todo = NewTodo { 
             title: title, 
@@ -112,9 +113,10 @@ pub mod db {
             parent_todo_id: None 
         };
 
+        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
         diesel::insert_into(schema::todo::table)
             .values(&new_todo)
-            .execute(connection)
+            .execute(&mut conn)
             .expect("Error saving new todo");
 
         (new_todo.title,new_todo.description)
@@ -147,27 +149,20 @@ pub mod db {
         }
     }
 
-    pub fn update(connection: &mut SqliteConnection) {
-        // -- Update
-        let id = 1;
-
-        let todo = diesel::update(schema::todo::table.find(id))
-            .set(schema::todo::completed.eq(true))
-            .execute(connection)
-            .unwrap();
-    }
-
-    pub fn delete(connection: &mut SqliteConnection) {
-        // -- Delete
-        let target = String::from("test");
-        let pattern = format!("%{}%", target);
-
-        let num_deleted = diesel::delete(schema::todo::table.filter(schema::todo::title.like(pattern)))
-            .execute(connection)
-            .expect("Error deleting posts");
-
-        println!("Deleted {} todos", num_deleted);
-
+    pub fn update(pool: DbPool, id: Option<i32>, title: String, description: String) {
+        match id {
+            Some(id) => {
+                let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                let todo = diesel::update(schema::todo::table.find(id))
+                    .set((
+                            schema::todo::title.eq(title),
+                            schema::todo::description.eq(description),
+                        ))
+                    .execute(&mut conn)
+                    .unwrap();
+                }
+            None => {} 
+        }
     }
 
 }

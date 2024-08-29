@@ -236,7 +236,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         // SUBMIT SEARCH STRING...
                         // to be updated to lazy loading
                         let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                        search_results = db::search(&mut conn, &search_string);
+                        search_results = db::search(pool.clone(), &search_string);
                         main_content_shown = Content::Search_Results;
                         search_string.clear();
                     }
@@ -306,7 +306,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         } else {
                             // Add todo 
                             let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                            db::create(&mut conn, todo_name.clone(), todo_description.clone());
+                            db::create(pool.clone(), todo_name.clone(), todo_description.clone());
 
                             main_content_shown = Content::Daylist;
                             focused_widget = Widget::Main;
