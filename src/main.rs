@@ -92,8 +92,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .direction(Direction::Vertical)
                 .constraints(
                     [
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(80),
+                        Constraint::Percentage(25),
+                        Constraint::Percentage(75),
                     ]
                     .as_ref(),
                 )
@@ -124,10 +124,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .split(columns[2]);
 
 
-
             // Define the blocks
-            let left_top_block = Block::default().title("Left Top").borders(Borders::ALL);
-            let left_bottom_block = Block::default().title("Left Bottom").borders(Borders::ALL);
+            let logo_block = Paragraph::new(DayList::LOGO4).block(Block::default()).style(Style::default().fg(Color::Yellow));
+            let labels_block = Block::default().title("Labels").borders(Borders::ALL);
 
             // State Assignments
             let mut search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
@@ -203,17 +202,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             calendar_bounds = right_column[1];
 
 
-            // Static blocks
-            f.render_widget(left_top_block, left_column[0]);
-            f.render_widget(left_bottom_block, left_column[1]);
-            // f.render_widget(center_search_block, center_column[0]);
-            // f.render_widget(center_main_block, center_column[1]);
+            f.render_widget(logo_block, left_column[0]);
+            f.render_widget(labels_block, left_column[1]);
+            
+            // TODO - Sacrifice rendering these if the terminal size becomes too small
             f.render_widget(right_top_block, right_column[0]);
             f.render_widget(right_bottom_block, right_column[1]);
-            // f.render_widget(bottom_row_block, chunks[1]);
+
             f.render_widget(bottom_row_list, chunks[1]);
 
-            // Dynamic Blocks
             f.render_widget(search_widget, center_column[0]);
             f.render_stateful_widget(main_content, center_column[1], &mut todo_list.state);
         })?;
