@@ -27,18 +27,7 @@ pub mod db {
     
     use tui::widgets::{List, ListItem};
     use tui::style::{Color, Style};
-    pub fn fetch_todos<'a>(pool: DbPool, offset: i64, limit: i64) -> Vec<ListItem<'a>> {
-        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-        let results = schema::todo::table
-            .limit(limit)
-            .offset(offset)
-            .load::<Todo>(&mut conn)
-            .expect("Error loading items");
-        
-        format_todos(results)
-    }
-
-    pub fn fetch_todos2(pool: DbPool, offset: i64, limit: i64) -> Vec<Todo> {
+    pub fn fetch_todos(pool: DbPool, offset: i64, limit: i64) -> Vec<Todo> {
         let mut conn = pool.get().expect("Failed to get a connection from the pool.");
         let results = schema::todo::table
             .limit(limit)
