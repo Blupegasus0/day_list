@@ -68,7 +68,7 @@ pub mod db {
         results   
     }
 
-    pub fn search(pool: DbPool, target: &String) -> Vec<ListItem<'static>> {
+    pub fn search(pool: DbPool, target: &String) -> Vec<Todo> {
         // -- Read
         let pattern = format!("%{}%", target);
 
@@ -77,12 +77,7 @@ pub mod db {
             .filter(schema::todo::title.like(pattern))
             .load::<Todo>(&mut conn)
             .expect("Error loading todos");
-
-        let results_found = format!("Found {} todos matching '{}'\n", results.len(), target);
-        let mut search_results = format_todos(results);
-        
-        search_results.insert(0,ListItem::new(results_found));
-        search_results
+        results
     }
 
     pub fn format_todo(todo: &Todo) -> String {

@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // State
     let mut search_string = String::new();
-    let mut search_results = vec![ListItem::new("")];
+    let mut search_results = db::search(pool.clone(), &search_string);
 
     let mut todo_name = String::new();
     let mut todo_description = String::new();
@@ -124,7 +124,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .split(columns[2]);
 
 
-            // Define the blocks
+            // Define the block
             let logo_block = Paragraph::new(DayList::LOGO4).block(Block::default()).style(Style::default().fg(Color::Yellow));
             let labels_block = Block::default().title("Labels").borders(Borders::ALL);
 
@@ -141,7 +141,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             // A list for the bottom row showing keyboard shortcuts
             let row = Row::new(vec![
                 Cell::from("q|Quit"),
-                Cell::from("h|Help"),
                 Cell::from("n|New todo"),
                 Cell::from("d|Complete todo"),
                 Cell::from("X|Delete todo"),
@@ -152,7 +151,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             let bottom_row_list = Table::new(vec![row])
                 .block(Block::default().borders(Borders::ALL))
                 .widths(&[
-                    Constraint::Percentage(10),
                     Constraint::Percentage(10),
                     Constraint::Percentage(10),
                     Constraint::Percentage(15),
@@ -174,7 +172,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
-            let search_content = List::new(search_results.clone())
+            let search_content = List::new(
+                search_results.iter()
+                    .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
+                    .collect::<Vec<ListItem<'_>>>()) // probably suboptimal
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
