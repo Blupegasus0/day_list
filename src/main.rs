@@ -129,7 +129,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let labels_block = Block::default().title("Labels").borders(Borders::ALL);
 
             // State Assignments
-            let mut search_widget = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
+            let mut search_box = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
 
             let mut main_content = List::new([ListItem::new("")].to_vec()).block(Block::default().title("Daylist")
@@ -172,10 +172,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
-            let search_content = List::new(
-                search_results.iter()
+            let mut search_results = search_results.iter()
                     .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
-                    .collect::<Vec<ListItem<'_>>>()) // probably suboptimal
+                    .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
+            let search_content = List::new(search_results)
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
 
@@ -190,7 +190,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Display the focused widget
             match focused_widget {
                 Widget::Main => main_content = main_content.style(Style::default().fg(Color::Yellow)),
-                Widget::Search => search_widget = search_widget.style(Style::default().fg(Color::Yellow)),
+                Widget::Search => search_box = search_box.style(Style::default().fg(Color::Yellow)),
                 Widget::Calendar => right_bottom_block = right_bottom_block.style(Style::default().fg(Color::Yellow)),
                 Widget::Upcoming => right_top_block = right_top_block.style(Style::default().fg(Color::Yellow)),
                 _ => main_content = main_content.style(Style::default().fg(Color::Yellow)),
@@ -212,7 +212,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             f.render_widget(bottom_row_list, chunks[1]);
 
-            f.render_widget(search_widget, center_column[0]);
+            f.render_widget(search_box, center_column[0]);
+
             f.render_stateful_widget(main_content, center_column[1], &mut todo_list.state);
         })?;
 
