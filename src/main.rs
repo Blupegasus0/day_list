@@ -141,6 +141,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             // A list for the bottom row showing keyboard shortcuts
             let row = Row::new(vec![
                 Cell::from("q|Quit"),
+                Cell::from("Esc|Home"),
                 Cell::from("n|New todo"),
                 Cell::from("d|Complete todo"),
                 Cell::from("X|Delete todo"),
@@ -151,6 +152,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let bottom_row_list = Table::new(vec![row])
                 .block(Block::default().borders(Borders::ALL))
                 .widths(&[
+                    Constraint::Percentage(10),
                     Constraint::Percentage(10),
                     Constraint::Percentage(10),
                     Constraint::Percentage(15),
