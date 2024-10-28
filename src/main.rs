@@ -10,8 +10,6 @@ use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 // use tui::text::{Spans, Span};
 use tui::Terminal;
 use console::Term;
-use diesel::prelude::*;
-use diesel::sqlite::SqliteConnection;
 use chrono;
 
 use DayList::db;
