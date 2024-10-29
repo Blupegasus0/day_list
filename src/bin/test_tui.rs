@@ -1,24 +1,23 @@
-use diesel::r2d2::{self, ConnectionManager, Pool};
-use diesel::sqlite::SqliteConnection;
-use std::env;
+use sqlx::mysql::MySqlRow;
+use sqlx::Row;
 
-type DbPool = Pool<ConnectionManager<SqliteConnection>>;
-
-fn establish_connection_pool(database_url: &str) -> DbPool {
-    let manager = ConnectionManager::<SqliteConnection>::new(database_url);
-    Pool::builder()
-        .build(manager)
-        .expect("Failed to create pool.")
-}
-
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), sqlx::Error> {
+    dotenv::dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = establish_connection_pool(&database_url);
 
-    // Example usage
-    {
-        let conn = pool.get().expect("Failed to get a connection from the pool.");
-        // Perform your CRUD operation here
+    let pool  = MySqlPool::connect(&database_url).await?;
+    
+    let rows: Vec<MySqlRow> = sqlx::query("SELECT * FROM todo")
+                                .fetch_all($pool)
+                                .await?;
+
+    for row in rows {
+        let id: i32 = row.try_get("id")?;
+        let name: &str = row.try_get("name")?;
+        
+        println!("ID: {}, Name: {}", id, name);
     }
-}
 
+    Ok(())
+}
