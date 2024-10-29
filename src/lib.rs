@@ -106,7 +106,7 @@ pub mod state {
 
 
     use tui::widgets::{ListItem, ListState};
-    use crate::models::Todo;
+    use crate::schema::Todo;
     pub struct Todo_List {
         pub todos: Vec<Todo>,
         pub state: ListState,

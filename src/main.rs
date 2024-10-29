@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut todo_name = String::new();
     let mut todo_description = String::new();
-    let mut todo_name_selected = true;
+    let mut todo_name_selected = true; // maybe use an enum instead
 
     let mut focused_widget = Widget::Main; 
     let mut main_content_shown = Content::Daylist;

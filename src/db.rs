@@ -1,12 +1,8 @@
-
 pub mod db {
     use dotenvy::dotenv;
     use std::env;
 
     use crate::schema;
-    use crate::models::NewTodo;
-    use crate::models::Todo;
-
     
     pub fn establish_connection_pool() -> DbPool {
     }
@@ -34,16 +30,6 @@ pub mod db {
     }
 
     pub fn delete_todo(pool: DbPool, id: Option<i32>) {
-        match id {
-            Some(id) => {
-                let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                let num_deleted = diesel::delete(schema::todo::table.find(id))
-                    .execute(&mut conn)
-                    .expect("Error deleting posts");
-
-            }
-            None => {} 
-        }
     }
 
     pub fn update(pool: DbPool, id: Option<i32>, title: String, description: String) {
