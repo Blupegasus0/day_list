@@ -267,7 +267,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         }
 
                     KeyCode::Char('d') => {
-                        db::complete_todo(pool.clone(), todo_list.get_selected_id());
+                        db::toggle_todo_status(pool.clone(), todo_list.get_selected_id());
                         todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
                     },
 

@@ -1,3 +1,6 @@
+pub mod schema;
+pub mod db;
+
 //https://patorjk.com/software/taag/#p=display&f=Tmplr&t=Daylist
 pub const LOGO: &str = "
   ____          _ _     _   
@@ -106,7 +109,7 @@ pub mod state {
 
 
     use tui::widgets::{ListItem, ListState};
-    use crate::schema::Todo;
+    use crate::schema::schema::Todo;
     pub struct Todo_List {
         pub todos: Vec<Todo>,
         pub state: ListState,
@@ -166,7 +169,7 @@ pub mod state {
         pub fn get_selected_id(&self) -> Option<i32> {
             match self.state.selected() {
                 Some(i) => {
-                    Some(self.todos[i].id)
+                    Some(self.todos[i].todo_id)
                 }
                 None => None
             }
