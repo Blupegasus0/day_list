@@ -1,24 +1,26 @@
 pub mod schema {
+    use chrono::NaiveDateTime;
+
     #[derive(sqlx::FromRow)]
     pub struct Todo {
-        todo_id: u32,
-        title: String,
-        description: String,
-        date_created: NativeDateTime,
-        status: bool,
-        date_due: NataiveDateTime,
-        reminder_date: NativeDateTime,
-        parent_todo: u32,
-        priority: i32,
-        project_id: u32,
+        pub todo_id: i32,
+        pub title: String,
+        pub description: Option<String>,
+        pub date_created: NaiveDateTime,
+        pub status: bool,
+        pub date_due: Option<NaiveDateTime>,
+        pub reminder_date: Option<NaiveDateTime>,
+        pub parent_todo: Option<i32>,
+        pub priority: i32,
+        pub project_id: Option<i32>,
     }
 
     #[derive(sqlx::FromRow)]
     pub struct Project {
-        project_id: u32,
-        name: String,
-        description: String,
-        color: String,
-        favorite_status: bool,
+        pub project_id: i32,
+        pub name: String,
+        pub description: Option<String>,
+        pub color: Option<String>,
+        pub favorite_status: bool,
     }
 }
