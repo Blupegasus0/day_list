@@ -29,17 +29,13 @@ async fn establish_connection() -> Result<MySqlPool, sqlx::Error> {
     MySqlPool::connect(&database_url).await
 }
 
-// Execure SELECT query on database to get todos
-async fn get_all_todos(pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
+// Execure SELECT query on database to get users
+async fn get_all_users(pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
 // All database functions must return a Result<T>
-    let todos = sqlx::query_as!(Todo, "SELECT * FROM todo")
+    let users = sqlx::query_as!(Todo, "SELECT * FROM todo")
         .fetch_all(pool)
     .await?;
-    Ok(todos)
-}
-
-async fn search_todos(pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
-    let 
+    Ok(users)
 }
 
 #[tokio::main]
@@ -47,8 +43,8 @@ async fn main() -> Result<(), sqlx::Error> {
     // Set up the database connection
     let pool = establish_connection().await?;
 
-    // Fetch and display all todos
-    match get_all_todos(&pool).await {
+    // Fetch and display all users
+    match get_all_users(&pool).await {
         Ok(users) => {
             for user in &users {
                 println!("{:?}", user);
@@ -58,7 +54,7 @@ async fn main() -> Result<(), sqlx::Error> {
         Err(err) => eprintln!("Error fetching users: {:?}", err),
     }
 
-    match get_all_todos(&pool).await {
+    match get_all_users(&pool).await {
         Ok(users) => {
             for user in &users {
                 println!("{:?}", user);
@@ -68,7 +64,7 @@ async fn main() -> Result<(), sqlx::Error> {
         Err(err) => eprintln!("Error fetching users: {:?}", err),
     }
 
-    match get_all_todos(&pool).await {
+    match get_all_users(&pool).await {
         Ok(users) => {
             for user in &users {
                 println!("{:?}", user);
