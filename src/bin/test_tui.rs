@@ -29,13 +29,13 @@ async fn establish_connection() -> Result<MySqlPool, sqlx::Error> {
     MySqlPool::connect(&database_url).await
 }
 
-// Execure SELECT query on database to get users
-async fn get_all_users(pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
+// Execure SELECT query on database to get todos
+async fn get_all_todos(pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
 // All database functions must return a Result<T>
-    let users = sqlx::query_as!(Todo, "SELECT * FROM todo")
+    let todos = sqlx::query_as!(Todo, "SELECT * FROM todo")
         .fetch_all(pool)
     .await?;
-    Ok(users)
+    Ok(todos)
 }
 
 #[tokio::main]
@@ -43,35 +43,35 @@ async fn main() -> Result<(), sqlx::Error> {
     // Set up the database connection
     let pool = establish_connection().await?;
 
-    // Fetch and display all users
-    match get_all_users(&pool).await {
-        Ok(users) => {
-            for user in &users {
-                println!("{:?}", user);
+    // Fetch and display all todos
+    match get_all_todos(&pool).await {
+        Ok(todos) => {
+            for todo in &todos {
+                println!("{:?}", todo);
             }
-            if users.len() == 0 { println!("No data in table"); }
+            if todos.len() == 0 { println!("No data in table"); }
         }
-        Err(err) => eprintln!("Error fetching users: {:?}", err),
+        Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
 
-    match get_all_users(&pool).await {
-        Ok(users) => {
-            for user in &users {
-                println!("{:?}", user);
+    match get_all_todos(&pool).await {
+        Ok(todos) => {
+            for todo in &todos {
+                println!("{:?}", todo);
             }
-            if users.len() == 0 { println!("No data in table"); }
+            if todos.len() == 0 { println!("No data in table"); }
         }
-        Err(err) => eprintln!("Error fetching users: {:?}", err),
+        Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
 
-    match get_all_users(&pool).await {
-        Ok(users) => {
-            for user in &users {
-                println!("{:?}", user);
+    match get_all_todos(&pool).await {
+        Ok(todos) => {
+            for todo in &todos {
+                println!("{:?}", todo);
             }
-            if users.len() == 0 { println!("No data in table"); }
+            if todos.len() == 0 { println!("No data in table"); }
         }
-        Err(err) => eprintln!("Error fetching users: {:?}", err),
+        Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
 
     Ok(())
