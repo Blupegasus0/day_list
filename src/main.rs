@@ -18,6 +18,7 @@ use DayList::nav::Content;
 use DayList::state::Todo_List;
 
 
+/*
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -395,4 +396,4 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 } //main
-
+*/

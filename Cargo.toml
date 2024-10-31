@@ -16,4 +16,6 @@ toml = "0.8.12"
 dotenvy = "0.15"
 tui = "0.19.0"
 crossterm = "0.28.1"
-sqlx = { version = "0.8.2", features = ["mysql", "chrono"] }
+sqlx = { version = "0.8.2", features = ["mysql", "chrono", "runtime-tokio"] }
+tokio = { version = "1", features = ["full"] }
+dotenv = "0.15"
