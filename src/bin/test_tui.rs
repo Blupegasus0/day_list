@@ -1,7 +1,7 @@
 use sqlx::mysql::MySqlPool;
 use dotenv::dotenv;
 use std::env;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Local};
 use sqlx::FromRow;
 
 // Define rust object
@@ -50,20 +50,21 @@ async fn test_create_todo(conn_pool: &MySqlPool) -> Result<(), sqlx::Error> {
 }
 
 async fn create_todo(conn_pool: &MySqlPool, title: String, 
-    description: String, date_due: Option<NaiveDateTime>, 
+    description: Option<String>, date_due: Option<NaiveDateTime>, 
     reminder_date: Option<NaiveDateTime>, parent_todo: Option<i32>, 
     priority: i32, project_id: Option<i32>
 ) -> Result<(), sqlx::Error> {
-    //let current_date = ifaoeihf;
-
-    /*
+    let current_date = Some(Local::now().naive_local());
+    let status = false;
+    
     sqlx::query!("INSERT INTO todo (title, description, date_created, status, date_due, reminder_date, parent_todo, priority, project_id) 
-        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);"
-        title, description, current_date, false, date_due, reminder_date, parent_todo, priority, project_id
+        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        title, description, current_date, status, date_due, 
+        reminder_date, parent_todo, 
+        priority, project_id
     )
         .execute(conn_pool)
         .await?;
-*/
     Ok(())
 }
 
@@ -76,8 +77,19 @@ async fn main() -> Result<(), sqlx::Error> {
     // Set up the database connection
     let conn_pool = establish_connection().await?;
 
+    // state test data
+    let title = String::from("Real from rust again");
+    let description = Some(String::from("used the real create_todo"));
+    let date_due = None;
+    let reminder_date = None;
+    let parent_todo = None;
+    let priority = 4;
+    let project_id = None;
+
     // Fetch and display all todos
-    match test_create_todo(&conn_pool, ).await {
+    match create_todo(&conn_pool, title, description, date_due, reminder_date, 
+        parent_todo, priority, project_id).await 
+    {
         Ok(_) => println!("Todo created!"),
         Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
@@ -85,7 +97,7 @@ async fn main() -> Result<(), sqlx::Error> {
     match get_all_todos(&conn_pool).await {
         Ok(todos) => {
             for todo in &todos {
-                println!("{}", todo.todo_id);
+                println!("{}", todo.title);
             }
             if todos.len() == 0 { println!("No data in table"); }
         }
