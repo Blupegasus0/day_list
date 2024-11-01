@@ -21,7 +21,7 @@ pub mod db {
     }
 
     // Execure SELECT query on database to get todos
-    pub async fn search(conn_pool: &MySqlPool, search_string: String) -> Result<Vec<Todo>, sqlx::Error> {
+    pub async fn search(conn_pool: &MySqlPool, search_string: &String) -> Result<Vec<Todo>, sqlx::Error> {
         // All database functions must return a Result<T>
         let search_string1 = format!("%{}%",search_string);
         let search_string2 = format!("%{}%",search_string);
@@ -31,8 +31,8 @@ WHERE todo.title LIKE ? OR todo.description LIKE ?;", search_string1, search_str
         .await?;
         Ok(todos)
     }
-    // Execure SELECT query on database to get todos
-    pub async fn get_all_todos(conn_pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
+    // Execute SELECT query on database to get todos
+    pub async fn fetch_todos(conn_pool: &MySqlPool) -> Result<Vec<Todo>, sqlx::Error> {
         // All database functions must return a Result<T>
         let todos = sqlx::query_as!(Todo, "SELECT * FROM todo")
             .fetch_all(conn_pool)
@@ -59,37 +59,43 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
         Ok(())
     }
 
+    pub fn format_todo(todo: &Todo) -> String {
+        let mut todo_status = "[ ]";
+        if todo.status == 1 {
+            todo_status = "[]";
+        }
+
+        format!("\n   {} {}\n       {}\n",todo_status, todo.title, 
+            match todo.description.clone() {
+                Some(s) => s,
+                None => "--".to_string(),
+            } 
+        )
+    }
 
     /*
-    pub fn fetch_todos(pool: DbPool, offset: i64, limit: i64) -> Vec<Todo> {
-    dummy_todo_list
-    }
-
-    pub fn search(pool: DbPool, target: &String) -> Vec<Todo> {
-    dummy_todo_list
-    }
-
     pub fn format_todo(todo: &Todo) -> String {
-    format!("{}\n{}", dummy_todo_list.title, dummy_todo_list.description)
+        format!("{}\n{}", todo.title, todo.description)
     }
 
     // TODO
     fn format_todos(results: Vec<Todo>) -> Vec<ListItem<'static>> {
-    }
-
-    pub fn create(pool: DbPool, title: String, description: String) -> (String, Option<String>) {
-    }
-
-    pub fn toggle_todo_status(pool: DbPool, id: Option<i32>) {
-    // read todo status
-    // set todo status to !status
-    }
-
-    pub fn delete_todo(pool: DbPool, id: Option<i32>) {
-    }
-
-    pub fn update(pool: DbPool, id: Option<i32>, title: String, description: String) {
+        vec![ListItem::new(results)]
     }
     */
+
+    pub fn toggle_todo_status(pool: &MySqlPool, id: Option<i32>) {
+    // read todo status
+    // set todo status to !status
+    ()
+    }
+
+    pub fn delete_todo(pool: &MySqlPool, id: Option<i32>) {
+    ()
+    }
+
+    pub fn update(pool: &MySqlPool, id: Option<i32>, title: String, description: String) {
+    ()
+    }
 
 }
