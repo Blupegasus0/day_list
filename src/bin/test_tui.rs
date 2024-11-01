@@ -1,14 +1,15 @@
 use sqlx::mysql::MySqlPool;
+use sqlx::FromRow;
 use dotenv::dotenv;
 use std::env;
 use chrono::{NaiveDateTime, Local};
-use sqlx::FromRow;
 
 use DayList::db::db;
 
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
+    /*
     // Set up the database connection
     let conn_pool = db::establish_connection().await?;
 
@@ -33,7 +34,7 @@ async fn main() -> Result<(), sqlx::Error> {
         Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
 
-    match db::fetch_todos(&conn_pool).await {
+    match db::fetch_todos(&conn_pool, 0, 1).await {
         Ok(todos) => {
             for todo in &todos {
                 println!("{}", todo.title);
@@ -43,6 +44,6 @@ async fn main() -> Result<(), sqlx::Error> {
         Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
 
-
+*/
     Ok(())
 }

@@ -19,7 +19,8 @@ use DayList::nav::Content;
 use DayList::state::Todo_List;
 
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(stdout, EnableMouseCapture)?;
@@ -31,12 +32,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
-    let conn_pool = db::establish_connection();
+    let conn_pool = db::establish_connection().await?;
     //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
 
     // State
     let mut search_string = String::new();
-    let mut search_results = db::search(&conn_pool, &search_string);
+    let mut search_results = db::search(&conn_pool, &search_string).await?;
 
     let mut todo_name = String::new();
     let mut todo_description = String::new();
@@ -57,7 +58,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     
     // testing daylist state
-    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
+    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
 
     loop {
         terminal.draw(|f| {
@@ -173,7 +174,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
-            let mut search_results = search_results.iter()
+           let mut search_results = search_results.iter()
                     .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
                     .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
             let search_content = List::new(search_results)
@@ -235,7 +236,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         // SUBMIT SEARCH STRING...
                         // to be updated to lazy loading
                         //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                        search_results = db::search(&conn_pool, &search_string);
+                        search_results = db::search(&conn_pool, &search_string).await?;
                         main_content_shown = Content::Search_Results;
                         search_string.clear();
                     }
@@ -252,7 +253,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => main_content_shown = Content::Daylist,
 
-                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit)),
+                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?),
 
                     KeyCode::Char('n') => {
                         focused_widget = Widget::Edit_Todo; 
@@ -269,12 +270,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                     KeyCode::Char('d') => {
                         db::toggle_todo_status(&conn_pool, todo_list.get_selected_id());
-                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
 
                     KeyCode::Char('X') => {
                         db::delete_todo(&conn_pool, todo_list.get_selected_id());
-                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
@@ -307,9 +308,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                             //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
                             //db::create(pool.clone(), todo_name.clone(), todo_description.clone());
                             db::create_todo(
-                                &conn_pool, todo_name.clone(), todo_description.clone(),
+                                &conn_pool, todo_name.clone(), Some(todo_description.clone()),
                                 None, None, None, 4, None
-                            )?;
+                            ).await?;
 
                             main_content_shown = Content::Daylist;
                             focused_widget = Widget::Main;
@@ -319,7 +320,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             todo_name_selected = true;
                         }
                         // Reload todos
-                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
                     //  KeyCode::Tab .... add tab functionality TODO
                     KeyCode::Char(c) => {
