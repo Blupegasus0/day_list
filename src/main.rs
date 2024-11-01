@@ -11,6 +11,7 @@ use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 use tui::Terminal;
 use console::Term;
 use chrono;
+use sqlx::mysql::MySqlPool;
 
 use DayList::db::db;
 use DayList::nav::Widget;
@@ -30,12 +31,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
-    let pool = db::establish_connection_pool();
-    let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+    let conn_pool = db::establish_connection();
+    //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
 
     // State
     let mut search_string = String::new();
-    let mut search_results = db::search(pool.clone(), &search_string);
+    let mut search_results = db::search(&conn_pool, &search_string);
 
     let mut todo_name = String::new();
     let mut todo_description = String::new();
@@ -56,7 +57,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     
     // testing daylist state
-    let mut todo_list = Todo_List::new(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
+    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
 
     loop {
         terminal.draw(|f| {
@@ -233,8 +234,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Enter => {
                         // SUBMIT SEARCH STRING...
                         // to be updated to lazy loading
-                        let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                        search_results = db::search(pool.clone(), &search_string);
+                        //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                        search_results = db::search(&conn_pool, &search_string);
                         main_content_shown = Content::Search_Results;
                         search_string.clear();
                     }
@@ -251,7 +252,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => main_content_shown = Content::Daylist,
 
-                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit)),
+                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit)),
 
                     KeyCode::Char('n') => {
                         focused_widget = Widget::Edit_Todo; 
@@ -267,13 +268,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                         }
 
                     KeyCode::Char('d') => {
-                        db::toggle_todo_status(pool.clone(), todo_list.get_selected_id());
-                        todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
+                        db::toggle_todo_status(&conn_pool, todo_list.get_selected_id());
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
                     },
 
                     KeyCode::Char('X') => {
-                        db::delete_todo(pool.clone(), todo_list.get_selected_id());
-                        todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
+                        db::delete_todo(&conn_pool, todo_list.get_selected_id());
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
                     },
 
                     KeyCode::Char('k') => focused_widget = focused_widget.up(),
@@ -303,7 +304,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             todo_name_selected = false;
                         } else {
                             // Add todo 
-                            let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                            //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
                             //db::create(pool.clone(), todo_name.clone(), todo_description.clone());
                             db::create_todo(
                                 &conn_pool, todo_name.clone(), todo_description.clone(),
@@ -318,7 +319,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             todo_name_selected = true;
                         }
                         // Reload todos
-                        todo_list.set_todos(db::fetch_todos(pool.clone(), todo_items_offset, todo_items_limit));
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit));
                     },
                     //  KeyCode::Tab .... add tab functionality TODO
                     KeyCode::Char(c) => {
