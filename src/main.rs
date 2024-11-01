@@ -12,13 +12,12 @@ use tui::Terminal;
 use console::Term;
 use chrono;
 
-use DayList::db;
+use DayList::db::db;
 use DayList::nav::Widget;
 use DayList::nav::Content;
 use DayList::state::Todo_List;
 
 
-/*
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -305,7 +304,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                         } else {
                             // Add todo 
                             let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                            db::create(pool.clone(), todo_name.clone(), todo_description.clone());
+                            //db::create(pool.clone(), todo_name.clone(), todo_description.clone());
+                            db::create_todo(
+                                &conn_pool, todo_name.clone(), todo_description.clone(),
+                                None, None, None, 4, None
+                            )?;
 
                             main_content_shown = Content::Daylist;
                             focused_widget = Widget::Main;
@@ -396,4 +399,3 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 } //main
-*/
