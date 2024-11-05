@@ -3,15 +3,11 @@ use std::io;
 
 use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tui::backend::{Backend, CrosstermBackend};
+use tui::backend::{CrosstermBackend};
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
-// use tui::text::{Spans, Span};
 use tui::Terminal;
-use console::Term;
-use chrono;
-use sqlx::mysql::MySqlPool;
 
 use DayList::db::db;
 use DayList::nav::Widget;
@@ -20,7 +16,11 @@ use DayList::state::Todo_List;
 
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() {
+    run().await.expect("Daylist encountered an error...");
+}
+
+async fn run() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(stdout, EnableMouseCapture)?;
@@ -33,7 +33,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // database conncection
     let conn_pool = db::establish_connection().await?;
-    //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
 
     // State
     let mut search_string = String::new();
@@ -48,7 +47,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut todo_items_limit = 10; // the amount of items displayed should depend
     let mut todo_items_offset = 0;
-    //let mut daylist_items = vec![ListItem::new("")];
     
     // Widget Boundaries
     let mut search_bounds = Rect::default();
@@ -234,8 +232,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     KeyCode::Backspace => {search_string.pop();}, // remove last character
                     KeyCode::Enter => {
                         // SUBMIT SEARCH STRING...
-                        // to be updated to lazy loading
-                        //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
+                        // TODO update to lazy loading
                         search_results = db::search(&conn_pool, &search_string).await?;
                         main_content_shown = Content::Search_Results;
                         search_string.clear();
@@ -305,8 +302,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                             todo_name_selected = false;
                         } else {
                             // Add todo 
-                            //TODO let mut conn = pool.get().expect("Failed to get a connection from the pool.");
-                            //db::create(pool.clone(), todo_name.clone(), todo_description.clone());
                             db::create_todo(
                                 &conn_pool, todo_name.clone(), Some(todo_description.clone()),
                                 None, None, None, 4, None
@@ -322,7 +317,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         // Reload todos
                         todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
-                    //  KeyCode::Tab .... add tab functionality TODO
+                    //  KeyCode::Tab // TODO add tab functionality
                     KeyCode::Char(c) => {
                         if todo_name_selected {todo_name.push(c);}
                         else {todo_description.push(c);}
