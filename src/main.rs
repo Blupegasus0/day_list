@@ -32,7 +32,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
     //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
-    let conn_pool = db::establish_connection().await?;
+    let conn_pool = db::establish_connection().await.expect("Failed to connect to db. Try Again.");
 
     // State
     let mut search_string = String::new();
@@ -55,7 +55,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
     let mut upcoming_bounds = Rect::default();
     
     
-    // testing daylist state
+    // testing daylist state 
     let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
 
     loop {
