@@ -8,7 +8,8 @@ pub mod db {
     use dotenv::dotenv;
     use std::env;
     use chrono::{NaiveDateTime, Local};
-    use sqlx::FromRow;
+
+    use crate::utils;
 
     // Connect database to app runtime
     pub async fn establish_connection() -> Result<MySqlPool, sqlx::Error> {
@@ -74,28 +75,61 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
     }
 
     /*
-    pub fn format_todo(todo: &Todo) -> String {
-        format!("{}\n{}", todo.title, todo.description)
-    }
-
     // TODO
     fn format_todos(results: Vec<Todo>) -> Vec<ListItem<'static>> {
         vec![ListItem::new(results)]
     }
     */
 
-    pub fn toggle_todo_status(pool: &MySqlPool, id: Option<i32>) {
-    // read todo status
-    // set todo status to !status
-    ()
+    pub async fn toggle_todo_status(conn_pool: &MySqlPool, id: Option<i32>) -> Result<(), sqlx::Error> {
+        // read todo status
+        // set todo status to !status
+        match id {
+            Some(id) => {
+                let record = sqlx::query!("SELECT status FROM todo WHERE todo_id = ?", id)
+                    .fetch_optional(conn_pool)
+                .await?;
+                print!("{:?}", record);
+
+                match record {
+                    Some(value) => {
+                        let mut status = value.status;
+                        if status == 0 {status = 1} else {status = 0;}
+                        sqlx::query!("UPDATE todo SET status = ? WHERE todo_id = ?", status, id)
+                            .execute(conn_pool)
+                        .await?;
+
+                    }
+                    None => {},
+                }
+            }
+            None =>  utils::alert("No valid todo item selected."),// TODO error popup "no"
+        };
+        Ok(())
     }
 
-    pub fn delete_todo(pool: &MySqlPool, id: Option<i32>) {
-    ()
+    pub async fn delete_todo(conn_pool: &MySqlPool, id: Option<i32>) -> Result<(), sqlx::Error> {
+        match id {
+            Some(id) => {
+                sqlx::query!("DELETE FROM todo WHERE todo_id = ?", id)
+                    .execute(conn_pool)
+                .await?;
+            }
+            None => print!("NO ID SELECTED")//utils::alert("No valid todo item selected."),// TODO error popup "no"
+        };
+        Ok(())
     }
 
-    pub fn update(pool: &MySqlPool, id: Option<i32>, title: String, description: String) {
-    ()
+    pub async fn update(conn_pool: &MySqlPool, id: Option<i32>, title: String, description: String) -> Result<(), sqlx::Error>{
+        match id {
+            Some(id) => {
+                sqlx::query!("UPDATE todo SET title = ?, description = ? WHERE todo_id = ?", title, description, id)
+                    .execute(conn_pool)
+                .await?;
+            }
+            None =>  utils::alert("No valid todo item selected."),// TODO error popup "no"
+        };
+        Ok(())
     }
 
 }
