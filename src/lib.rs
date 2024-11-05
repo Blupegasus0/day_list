@@ -176,3 +176,8 @@ pub mod state {
         }
     }
 }
+
+pub mod utils {
+    // TODO display popup message for user
+    pub fn alert(message: &str) {}
+}
