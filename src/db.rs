@@ -120,7 +120,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
         Ok(())
     }
 
-    pub async fn update(conn_pool: &MySqlPool, id: Option<i32>, title: String, description: String) -> Result<(), sqlx::Error>{
+    pub async fn update_todo(conn_pool: &MySqlPool, id: Option<i32>, title: String, description: String) -> Result<(), sqlx::Error>{
         match id {
             Some(id) => {
                 sqlx::query!("UPDATE todo SET title = ?, description = ? WHERE todo_id = ?", title, description, id)
