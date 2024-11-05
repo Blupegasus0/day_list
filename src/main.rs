@@ -3,7 +3,7 @@ use std::io;
 
 use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use tui::backend::{CrosstermBackend};
+use tui::backend::CrosstermBackend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
@@ -266,12 +266,12 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         }
 
                     KeyCode::Char('d') => {
-                        db::toggle_todo_status(&conn_pool, todo_list.get_selected_id());
+                        db::toggle_todo_status(&conn_pool, todo_list.get_selected_id()).await?;
                         todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
 
                     KeyCode::Char('X') => {
-                        db::delete_todo(&conn_pool, todo_list.get_selected_id());
+                        db::delete_todo(&conn_pool, todo_list.get_selected_id()).await?;
                         todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
 
