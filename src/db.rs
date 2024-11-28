@@ -74,13 +74,6 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
         )
     }
 
-    /*
-    // TODO
-    fn format_todos(results: Vec<Todo>) -> Vec<ListItem<'static>> {
-        vec![ListItem::new(results)]
-    }
-    */
-
     pub async fn toggle_todo_status(conn_pool: &MySqlPool, id: Option<i32>) -> Result<(), sqlx::Error> {
         // read todo status
         // set todo status to !status
@@ -89,7 +82,6 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
                 let record = sqlx::query!("SELECT status FROM todo WHERE todo_id = ?", id)
                     .fetch_optional(conn_pool)
                 .await?;
-                print!("{:?}", record);
 
                 match record {
                     Some(value) => {

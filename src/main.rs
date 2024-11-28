@@ -124,7 +124,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             // Define the block
             let logo_block = Paragraph::new(DayList::LOGO4).block(Block::default()).style(Style::default().fg(Color::Yellow));
-            let labels_block = Block::default().title("Labels").borders(Borders::ALL);
+            let labels_block = Block::default().title("Projects").borders(Borders::ALL);
 
             // State Assignments
             let mut search_box = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
