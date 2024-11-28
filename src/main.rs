@@ -1,7 +1,9 @@
 use std::error::Error;
 use std::io;
 
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers};
+use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, 
+    KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags,PopKeyboardEnhancementFlags
+};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::backend::CrosstermBackend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
@@ -24,6 +26,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(stdout, EnableMouseCapture)?;
+    //crossterm::execute!(stdout, 
+    //    PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES,),
+    //    PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES)
+    //)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -259,6 +265,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
                     KeyCode::Tab => {
                             if key.modifiers.contains(KeyModifiers::SHIFT) {
+                                print!("Going up captain!");
                                 todo_list.previous();
                             } else {
                                 todo_list.next();
@@ -392,6 +399,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
     // Cleanup
     disable_raw_mode()?;
     crossterm::execute!(terminal.backend_mut(), DisableMouseCapture)?;
+    //crossterm::execute!(stdout, 
+    //    PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES,),
+    //    PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES)
+    //)?;
     terminal.show_cursor()?;
 
     Ok(())
