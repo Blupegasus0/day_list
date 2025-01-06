@@ -107,7 +107,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
                     .execute(conn_pool)
                 .await?;
             }
-            None => print!("NO ID SELECTED")//utils::alert("No valid todo item selected."),// TODO error popup "no"
+            None => utils::alert("No valid todo item selected."),// TODO error popup "no"
         };
         Ok(())
     }
