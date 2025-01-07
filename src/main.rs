@@ -41,18 +41,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
     let mut app = App_State::init();
 
     // State
-    //let mut search_string = String::new();
-    //let mut search_results = db::search(&conn_pool, &app.search_string).await?;
-
-    //let mut todo_name = String::new();
-    //let mut todo_description = String::new();
-    //let mut todo_name_selected = true; // maybe use an enum instead
-
-    let mut focused_widget = Widget::Main; 
-    let mut main_content_shown = Content::Daylist;
-
-    let mut todo_items_limit = 10; // the amount of items displayed should depend
-    let mut todo_items_offset = 0;
     
     // Widget Boundaries
     let mut search_bounds = Rect::default();
@@ -62,7 +50,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
     
     
     // testing daylist state 
-    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
+    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
 
     loop {
         terminal.draw(|f| {
@@ -146,7 +134,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             let row = Row::new(vec![
                 Cell::from("q|Quit"),
                 Cell::from("Esc|Home"),
-                Cell::from("n|New todo"),
+                Cell::from("n|New"),
                 Cell::from("d|Complete todo"),
                 Cell::from("X|Delete todo"),
                 Cell::from("L|List todos"),
@@ -186,7 +174,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 .highlight_style(Style::default());
 
 
-            match main_content_shown {
+            match app.main_content_shown {
                 Content::Daylist => main_content = daylist_todos,
                 Content::Edit_Todo => main_content = edit_todo,
                 Content::Search_Results => main_content = search_content,
@@ -232,7 +220,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 Widget::Search => match key.code {
                     KeyCode::Esc => {
                         app.focused_widget = Widget::Main;
-                        main_content_shown = Content::Daylist;
+                        app.main_content_shown = Content::Daylist;
                     }, 
                     KeyCode::Char(c) => app.search_string.push(c), // append character to search string
                     KeyCode::Backspace => {app.search_string.pop();}, // remove last character
@@ -240,7 +228,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         // SUBMIT SEARCH STRING...
                         // TODO update to lazy loading
                         app.search_results = db::search(&conn_pool, &app.search_string).await?;
-                        main_content_shown = Content::Search_Results;
+                        app.main_content_shown = Content::Search_Results;
                     }
 
                     KeyCode::Up => app.focused_widget = app.focused_widget.up(),
@@ -253,13 +241,13 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 Widget::Main =>  match key.code {
                     KeyCode::Char('q') => break, // Quit on 'q' press
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
-                    KeyCode::Esc => main_content_shown = Content::Daylist,
+                    KeyCode::Esc => app.main_content_shown = Content::Daylist,
 
-                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?),
+                    KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?),
 
                     KeyCode::Char('n') => {
                         app.focused_widget = Widget::Edit_Todo; 
-                        main_content_shown = Content::Edit_Todo;
+                        app.main_content_shown = Content::Edit_Todo;
                     }
 
                     KeyCode::Tab => {
@@ -273,12 +261,12 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
                     KeyCode::Char('d') => {
                         db::toggle_todo_status(&conn_pool, todo_list.get_selected_id()).await?;
-                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
                     },
 
                     KeyCode::Char('X') => {
                         db::delete_todo(&conn_pool, todo_list.get_selected_id()).await?;
-                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
                     },
 
                     KeyCode::Char('k') => app.focused_widget = app.focused_widget.up(),
@@ -294,7 +282,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
                 Widget::Edit_Todo => match key.code {
                     KeyCode::Esc => {
-                        main_content_shown = Content::Daylist;
+                        app.main_content_shown = Content::Daylist;
                         app.focused_widget = Widget::Main;
                         app.todo_name.clear();
                         app.todo_description.clear();
@@ -315,7 +303,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                                     None, None, None, 4, None
                                 ).await?;
 
-                                main_content_shown = Content::Daylist;
+                                app.main_content_shown = Content::Daylist;
                                 app.focused_widget = Widget::Main;
 
                                 app.todo_name.clear();
@@ -324,7 +312,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                             }
                         }
                         // Reload todos
-                        todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
+                        todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
                     },
                     //  KeyCode::Tab // TODO add tab functionality
                     KeyCode::Char(c) => {

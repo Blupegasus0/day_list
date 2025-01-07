@@ -33,7 +33,7 @@ WHERE todo.title LIKE ? OR todo.description LIKE ?;", search_string1, search_str
         Ok(todos)
     }
     // Execute SELECT query on database to get todos
-    pub async fn fetch_todos(conn_pool: &MySqlPool, offset: i32, limit: i32) -> Result<Vec<Todo>, sqlx::Error> {
+    pub async fn fetch_todos(conn_pool: &MySqlPool, offset: u32, limit: u32) -> Result<Vec<Todo>, sqlx::Error> {
         // All database functions must return a Result<T>
         let todos = sqlx::query_as!(Todo, "SELECT * FROM todo")
             .fetch_all(conn_pool)
