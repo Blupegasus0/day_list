@@ -15,6 +15,7 @@ use DayList::db::db;
 use DayList::nav::Widget;
 use DayList::nav::Content;
 use DayList::state::Todo_List;
+use DayList::state::App_State;
 
 
 #[tokio::main]
@@ -26,10 +27,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(stdout, EnableMouseCapture)?;
-    //crossterm::execute!(stdout, 
-    //    PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES,),
-    //    PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::REPORT_ALL_KEYS_AS_ESCAPE_CODES)
-    //)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -40,9 +37,11 @@ async fn run() -> Result<(), Box<dyn Error>> {
     // database conncection
     let conn_pool = db::establish_connection().await.expect("Failed to connect to db. Try Again.");
 
+    let mut app = App_State::init();
+
     // State
-    let mut search_string = String::new();
-    let mut search_results = db::search(&conn_pool, &search_string).await?;
+    //let mut search_string = String::new();
+    let mut search_results = db::search(&conn_pool, &app.search_string).await?;
 
     let mut todo_name = String::new();
     let mut todo_description = String::new();
@@ -133,7 +132,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             let labels_block = Block::default().title("Projects").borders(Borders::ALL);
 
             // State Assignments
-            let mut search_box = Paragraph::new(search_string.as_ref()).block(Block::default().title("Search")
+            let mut search_box = Paragraph::new(app.search_string.as_ref()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
 
             let mut main_content = List::new([ListItem::new("")].to_vec()).block(Block::default().title("Daylist")
@@ -234,14 +233,14 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         focused_widget = Widget::Main;
                         main_content_shown = Content::Daylist;
                     }, 
-                    KeyCode::Char(c) => search_string.push(c), // append character to search string
-                    KeyCode::Backspace => {search_string.pop();}, // remove last character
+                    KeyCode::Char(c) => app.search_string.push(c), // append character to search string
+                    KeyCode::Backspace => {app.search_string.pop();}, // remove last character
                     KeyCode::Enter => {
                         // SUBMIT SEARCH STRING...
                         // TODO update to lazy loading
-                        search_results = db::search(&conn_pool, &search_string).await?;
+                        search_results = db::search(&conn_pool, &app.search_string).await?;
                         main_content_shown = Content::Search_Results;
-                        search_string.clear();
+                        app.search_string.clear();
                     }
 
                     KeyCode::Up => focused_widget = focused_widget.up(),

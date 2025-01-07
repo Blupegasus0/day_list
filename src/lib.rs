@@ -90,23 +90,54 @@ pub mod nav {
 
 
 pub mod state {
-    struct Daylist_State {
-        search_string: String,
-        main_context_string: String,
+    use crate::nav::Widget;
+    use crate::nav::Content;
+
+
+    pub struct App_State {
+        pub search_string: String,
+        pub main_context_string: String,
+        pub search_results: Result<Vec<Todo>, sqlx::Error>, 
+
+        pub todo_name: String,
+        pub todo_description: String,
+        pub edit_selection: Edit_Selection,
+
+        pub focused_widget: Widget,
+        pub main_content_shown: Content,
+
+        pub todo_items_limit: u32,
+        pub todo_items_offset: u32,
         // ...
     }
 
-    impl Daylist_State {
-        pub fn init() -> Daylist_State {
+    impl App_State {
+        pub fn init() -> App_State {
+            // TODO
             // do a bunch of calculations...
 
-            Daylist_State {
+            App_State {
                 search_string: String::new(),
                 main_context_string: String::new(),
+                search_results: Ok(vec![]),
+
+                todo_name: String::new(),
+                todo_description: String::new(),
+                edit_selection: Edit_Selection::Name,
+
+                focused_widget: Widget::Main,
+                main_content_shown: Content::Daylist,
+
+                todo_items_limit: 10,
+                todo_items_offset: 0,
             }
         }
     }
 
+    pub enum Edit_Selection {
+        Name,
+        Description,
+    }
 
     use tui::widgets::{ListItem, ListState};
     use crate::schema::schema::Todo;
