@@ -90,6 +90,8 @@ pub mod nav {
 
 
 pub mod state {
+    use tui::layout::Rect;
+
     use crate::nav::Widget;
     use crate::nav::Content;
 
@@ -108,6 +110,8 @@ pub mod state {
 
         pub todo_items_limit: u32,
         pub todo_items_offset: u32,
+
+        running: bool,
         // ...
     }
 
@@ -130,7 +134,16 @@ pub mod state {
 
                 todo_items_limit: 10,
                 todo_items_offset: 0,
+
+                running: true,
             }
+        }
+
+        pub fn is_running(&self) -> bool {
+            self.running
+        } 
+        pub fn exit(&mut self) {
+            self.running = false;
         }
     }
 
@@ -139,7 +152,6 @@ pub mod state {
         Description,
     }
 
-    use tui::layout::Rect;
     pub struct Layout_State {
         pub chunks: Rect,
         pub columns: Rect,
