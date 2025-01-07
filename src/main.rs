@@ -16,6 +16,7 @@ use DayList::nav::Widget;
 use DayList::nav::Content;
 use DayList::state::Todo_List;
 use DayList::state::App_State;
+use DayList::state::Layout_State;
 use DayList::state::Edit_Selection;
 
 
@@ -38,9 +39,9 @@ async fn run() -> Result<(), Box<dyn Error>> {
     // database conncection
     let conn_pool = db::establish_connection().await.expect("Failed to connect to db. Try Again.");
 
-    let mut app = App_State::init();
-
     // State
+    let mut app = App_State::init();
+    let mut layout = Layout_State::init();
     
     // Widget Boundaries
     let mut search_bounds = Rect::default();

@@ -139,39 +139,42 @@ pub mod state {
         Description,
     }
 
+    use tui::layout::Rect;
     pub struct Layout_State {
-        pub chunks: tui::layout::Rect,
-        pub columns: tui::layout::Rect,
-        pub left_column: tui::layout::Rect,
-        pub center_column: tui::layout::Rect,
-        pub right_column: tui::layout::Rect,
+        pub chunks: Rect,
+        pub columns: Rect,
+        pub left_column: Rect,
+        pub center_column: Rect,
+        pub right_column: Rect,
 
-        pub logo_block: tui::layout::Rect,
-        pub search_box: tui::layout::Rect,
-        pub main_content: tui::layout::Rect,
-        pub right_top_block: tui::layout::Rect, // Upcoming
-        pub right_bottom_block: tui::layout::Rect, // Calendar
+        pub logo_block: Rect,
+        pub search_box: Rect,
+        pub main_content: Rect,
+        pub right_top_block: Rect, // Upcoming
+        pub right_bottom_block: Rect, // Calendar
         
-        pub row: tui::layout::Rect,
-        pub bottom_row_list: tui::layout::Rect,
+        pub row: Rect,
+        pub bottom_row_list: Rect,
     }
 
     impl Layout_State {
-        pub fn init(&mut self) {
-            self.chunks = tui::layout::Rect::default();
-            self.columns = tui::layout::Rect::default();
-            self.left_column = tui::layout::Rect::default();
-            self.center_column = tui::layout::Rect::default();
-            self.right_column = tui::layout::Rect::default();
-
-            self.logo_block = tui::layout::Rect::default();
-            self.search_box = tui::layout::Rect::default();
-            self.main_content = tui::layout::Rect::default();
-            self.right_top_block = tui::layout::Rect::default();
-            self.right_bottom_block = tui::layout::Rect::default();
-
-            self.row = tui::layout::Rect::default();
-            self.bottom_row_list = tui::layout::Rect::default();
+        pub fn init() -> Layout_State {
+            Layout_State {
+                chunks: Rect::default(),
+                columns: Rect::default(),
+                left_column: Rect::default(),
+                center_column: Rect::default(),
+                right_column: Rect::default(),
+                
+                logo_block: Rect::default(),
+                search_box: Rect::default(),
+                main_content: Rect::default(),
+                right_top_block: Rect::default(),
+                right_bottom_block: Rect::default(),
+                
+                row: Rect::default(),
+                bottom_row_list: Rect::default(),
+            }
         }
     }
 
