@@ -97,7 +97,7 @@ pub mod state {
     pub struct App_State {
         pub search_string: String,
         pub main_context_string: String,
-        pub search_results: Result<Vec<Todo>, sqlx::Error>, 
+        pub search_results: Vec<Todo>,
 
         pub todo_name: String,
         pub todo_description: String,
@@ -119,7 +119,7 @@ pub mod state {
             App_State {
                 search_string: String::new(),
                 main_context_string: String::new(),
-                search_results: Ok(vec![]),
+                search_results: vec![],
 
                 todo_name: String::new(),
                 todo_description: String::new(),

@@ -16,6 +16,7 @@ use DayList::nav::Widget;
 use DayList::nav::Content;
 use DayList::state::Todo_List;
 use DayList::state::App_State;
+use DayList::state::Edit_Selection;
 
 
 #[tokio::main]
@@ -41,11 +42,11 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
     // State
     //let mut search_string = String::new();
-    let mut search_results = db::search(&conn_pool, &app.search_string).await?;
+    //let mut search_results = db::search(&conn_pool, &app.search_string).await?;
 
-    let mut todo_name = String::new();
-    let mut todo_description = String::new();
-    let mut todo_name_selected = true; // maybe use an enum instead
+    //let mut todo_name = String::new();
+    //let mut todo_description = String::new();
+    //let mut todo_name_selected = true; // maybe use an enum instead
 
     let mut focused_widget = Widget::Main; 
     let mut main_content_shown = Content::Daylist;
@@ -163,7 +164,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     Constraint::Percentage(15),
             ]);
 
-            let edit_string = format!("Title: {}\n-----\nDescription: {}",todo_name, todo_description);
+            let edit_string = format!("Title: {}\n-----\nDescription: {}",app.todo_name, app.todo_description);
             let edit_item = vec![ListItem::new(edit_string)];
 
             let edit_todo = List::new(edit_item)
@@ -177,7 +178,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
-           let mut search_results = search_results.iter()
+           let mut search_results = app.search_results.iter()
                     .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
                     .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
             let search_content = List::new(search_results)
@@ -193,7 +194,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             }
 
             // Display the focused widget
-            match focused_widget {
+            match app.focused_widget {
                 Widget::Main => main_content = main_content.style(Style::default().fg(Color::Yellow)),
                 Widget::Search => search_box = search_box.style(Style::default().fg(Color::Yellow)),
                 Widget::Calendar => right_bottom_block = right_bottom_block.style(Style::default().fg(Color::Yellow)),
@@ -226,11 +227,11 @@ async fn run() -> Result<(), Box<dyn Error>> {
         // Match on different types of events
         match event::read()? {
             // Handle keyboard events
-            Event::Key(key) => match focused_widget {
+            Event::Key(key) => match app.focused_widget {
                 // Search box is focused
                 Widget::Search => match key.code {
                     KeyCode::Esc => {
-                        focused_widget = Widget::Main;
+                        app.focused_widget = Widget::Main;
                         main_content_shown = Content::Daylist;
                     }, 
                     KeyCode::Char(c) => app.search_string.push(c), // append character to search string
@@ -238,15 +239,14 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     KeyCode::Enter => {
                         // SUBMIT SEARCH STRING...
                         // TODO update to lazy loading
-                        search_results = db::search(&conn_pool, &app.search_string).await?;
+                        app.search_results = db::search(&conn_pool, &app.search_string).await?;
                         main_content_shown = Content::Search_Results;
-                        app.search_string.clear();
                     }
 
-                    KeyCode::Up => focused_widget = focused_widget.up(),
-                    KeyCode::Down => focused_widget = focused_widget.down(),
-                    KeyCode::Left => focused_widget = focused_widget.left(),
-                    KeyCode::Right => focused_widget = focused_widget.right(),
+                    KeyCode::Up => app.focused_widget = app.focused_widget.up(),
+                    KeyCode::Down => app.focused_widget = app.focused_widget.down(),
+                    KeyCode::Left => app.focused_widget = app.focused_widget.left(),
+                    KeyCode::Right => app.focused_widget = app.focused_widget.right(),
                     _ => {} // Handle other keys as needed
                 },
 
@@ -258,7 +258,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?),
 
                     KeyCode::Char('n') => {
-                        focused_widget = Widget::Edit_Todo; 
+                        app.focused_widget = Widget::Edit_Todo; 
                         main_content_shown = Content::Edit_Todo;
                     }
 
@@ -281,58 +281,63 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
 
-                    KeyCode::Char('k') => focused_widget = focused_widget.up(),
-                    KeyCode::Char('j') => focused_widget = focused_widget.down(),
-                    KeyCode::Char('h') => focused_widget = focused_widget.left(),
-                    KeyCode::Char('l') => focused_widget = focused_widget.right(),
-                    KeyCode::Up => focused_widget = focused_widget.up(),
-                    KeyCode::Down => focused_widget = focused_widget.down(),
-                    KeyCode::Left => focused_widget = focused_widget.left(),
-                    KeyCode::Right => focused_widget = focused_widget.right(),
+                    KeyCode::Char('k') => app.focused_widget = app.focused_widget.up(),
+                    KeyCode::Char('j') => app.focused_widget = app.focused_widget.down(),
+                    KeyCode::Char('h') => app.focused_widget = app.focused_widget.left(),
+                    KeyCode::Char('l') => app.focused_widget = app.focused_widget.right(),
+                    KeyCode::Up => app.focused_widget = app.focused_widget.up(),
+                    KeyCode::Down => app.focused_widget = app.focused_widget.down(),
+                    KeyCode::Left => app.focused_widget = app.focused_widget.left(),
+                    KeyCode::Right => app.focused_widget = app.focused_widget.right(),
                     _ => {}, // Handle other keys as needed
                 },
 
                 Widget::Edit_Todo => match key.code {
                     KeyCode::Esc => {
                         main_content_shown = Content::Daylist;
-                        focused_widget = Widget::Main;
-                        todo_name.clear();
-                        todo_description.clear();
+                        app.focused_widget = Widget::Main;
+                        app.todo_name.clear();
+                        app.todo_description.clear();
                     },
                     KeyCode::Backspace => {
-                        if todo_name_selected {todo_name.pop();}
-                        else {todo_description.pop();}
+                        match app.edit_selection {
+                            Edit_Selection::Name => app.todo_name.pop(),
+                            Edit_Selection::Description => app.todo_description.pop(),
+                        };
                     }, // remove last character
                     KeyCode::Enter => {
-                        if todo_name_selected {
-                            todo_name_selected = false;
-                        } else {
-                            // Add todo 
-                            db::create_todo(
-                                &conn_pool, todo_name.clone(), Some(todo_description.clone()),
-                                None, None, None, 4, None
-                            ).await?;
+                        match app.edit_selection {
+                            Edit_Selection::Name => app.edit_selection = Edit_Selection::Description,
+                            Edit_Selection::Description => {
+                                // Add todo 
+                                db::create_todo(
+                                    &conn_pool, app.todo_name.clone(), Some(app.todo_description.clone()),
+                                    None, None, None, 4, None
+                                ).await?;
 
-                            main_content_shown = Content::Daylist;
-                            focused_widget = Widget::Main;
+                                main_content_shown = Content::Daylist;
+                                app.focused_widget = Widget::Main;
 
-                            todo_name.clear();
-                            todo_description.clear();
-                            todo_name_selected = true;
+                                app.todo_name.clear();
+                                app.todo_description.clear();
+                                app.edit_selection = Edit_Selection::Name;
+                            }
                         }
                         // Reload todos
                         todo_list.set_todos(db::fetch_todos(&conn_pool, todo_items_offset, todo_items_limit).await?);
                     },
                     //  KeyCode::Tab // TODO add tab functionality
                     KeyCode::Char(c) => {
-                        if todo_name_selected {todo_name.push(c);}
-                        else {todo_description.push(c);}
+                        match app.edit_selection {
+                            Edit_Selection::Name => app.todo_name.push(c),
+                            Edit_Selection::Description => app.todo_description.push(c),
+                        }
                     }, 
 
-                    KeyCode::Up => focused_widget = focused_widget.up(),
-                    KeyCode::Down => focused_widget = focused_widget.down(),
-                    KeyCode::Left => focused_widget = focused_widget.left(),
-                    KeyCode::Right => focused_widget = focused_widget.right(),
+                    KeyCode::Up => app.focused_widget = app.focused_widget.up(),
+                    KeyCode::Down => app.focused_widget = app.focused_widget.down(),
+                    KeyCode::Left => app.focused_widget = app.focused_widget.left(),
+                    KeyCode::Right => app.focused_widget = app.focused_widget.right(),
                     _ => {},
                 },
 
@@ -342,21 +347,21 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     KeyCode::Char('Q') => break, // Quit on 'Q' press
                     KeyCode::Esc => break, // Exit on Escape key - We'll see if this is kept
 
-                    KeyCode::Char('k') => focused_widget = focused_widget.up(),
-                    KeyCode::Char('j') => focused_widget = focused_widget.down(),
-                    KeyCode::Char('h') => focused_widget = focused_widget.left(),
-                    KeyCode::Char('l') => focused_widget = focused_widget.right(),
-                    KeyCode::Up => focused_widget = focused_widget.up(),
-                    KeyCode::Down => focused_widget = focused_widget.down(),
-                    KeyCode::Left => focused_widget = focused_widget.left(),
-                    KeyCode::Right => focused_widget = focused_widget.right(),
+                    KeyCode::Char('k') => app.focused_widget = app.focused_widget.up(),
+                    KeyCode::Char('j') => app.focused_widget = app.focused_widget.down(),
+                    KeyCode::Char('h') => app.focused_widget = app.focused_widget.left(),
+                    KeyCode::Char('l') => app.focused_widget = app.focused_widget.right(),
+                    KeyCode::Up => app.focused_widget = app.focused_widget.up(),
+                    KeyCode::Down => app.focused_widget = app.focused_widget.down(),
+                    KeyCode::Left => app.focused_widget = app.focused_widget.left(),
+                    KeyCode::Right => app.focused_widget = app.focused_widget.right(),
                     _ => {}, // Handle other keys as needed
                 },
 
             }
 
 
-            Event::Mouse(mouse_event) => match focused_widget {
+            Event::Mouse(mouse_event) => match app.focused_widget {
                 // Default Mouse handling
                 _ => match mouse_event.kind {
                     crossterm::event::MouseEventKind::Down(button) => {
@@ -368,7 +373,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         && mouse_event.row >= search_bounds.y
                         && mouse_event.row < search_bounds.y + search_bounds.height
                         {
-                            focused_widget = Widget::Search;
+                            app.focused_widget = Widget::Search;
                         }
 
                         if mouse_event.column >= main_bounds.x
@@ -376,7 +381,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         && mouse_event.row >= main_bounds.y
                         && mouse_event.row < main_bounds.y + main_bounds.height
                         {
-                            focused_widget = Widget::Main;
+                            app.focused_widget = Widget::Main;
                         }
                     }
                     _ => {}
