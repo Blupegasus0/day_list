@@ -139,6 +139,42 @@ pub mod state {
         Description,
     }
 
+    pub struct Layout_State {
+        pub chunks: tui::layout::Rect,
+        pub columns: tui::layout::Rect,
+        pub left_column: tui::layout::Rect,
+        pub center_column: tui::layout::Rect,
+        pub right_column: tui::layout::Rect,
+
+        pub logo_block: tui::layout::Rect,
+        pub search_box: tui::layout::Rect,
+        pub main_content: tui::layout::Rect,
+        pub right_top_block: tui::layout::Rect, // Upcoming
+        pub right_bottom_block: tui::layout::Rect, // Calendar
+        
+        pub row: tui::layout::Rect,
+        pub bottom_row_list: tui::layout::Rect,
+    }
+
+    impl Layout_State {
+        pub fn init(&mut self) {
+            self.chunks = tui::layout::Rect::default();
+            self.columns = tui::layout::Rect::default();
+            self.left_column = tui::layout::Rect::default();
+            self.center_column = tui::layout::Rect::default();
+            self.right_column = tui::layout::Rect::default();
+
+            self.logo_block = tui::layout::Rect::default();
+            self.search_box = tui::layout::Rect::default();
+            self.main_content = tui::layout::Rect::default();
+            self.right_top_block = tui::layout::Rect::default();
+            self.right_bottom_block = tui::layout::Rect::default();
+
+            self.row = tui::layout::Rect::default();
+            self.bottom_row_list = tui::layout::Rect::default();
+        }
+    }
+
     use tui::widgets::{ListItem, ListState};
     use crate::schema::schema::Todo;
     pub struct Todo_List {
