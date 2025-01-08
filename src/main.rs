@@ -163,14 +163,17 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             let edit_string = format!("
                 Title: {}
-                \n---------------\n
+               
                 Description: {}
-                \n---------------\n
+              
+
+                DD/MM/YY HH:MM
+
                 Date Due: {}
-                \n---------------\n
+             
                 Reminder Date: {}
-                \n---------------\n
-                Priority:  {}
+            
+                Priority 1-9:  {}
                 ",
                 app.edit_name, app.edit_description,
                 app.edit_date_due, app.edit_reminder_date,
