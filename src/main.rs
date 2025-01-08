@@ -161,7 +161,21 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     Constraint::Percentage(15),
                 ]);
 
-            let edit_string = format!("Title: {}\n-----\nDescription: {}",app.edit_name, app.edit_description);
+            let edit_string = format!("
+                Title: {}
+                \n---------------\n
+                Description: {}
+                \n---------------\n
+                Date Due: {}
+                \n---------------\n
+                Reminder Date: {}
+                \n---------------\n
+                Priority:  {}
+                ",
+                app.edit_name, app.edit_description,
+                app.edit_date_due, app.edit_reminder_date,
+                app.edit_priority
+            );
             let edit_item = vec![ListItem::new(edit_string)];
 
             let edit_todo = List::new(edit_item)
@@ -401,21 +415,31 @@ async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
             app.focused_widget = Widget::Main;
             app.edit_name.clear();
             app.edit_description.clear();
+            app.edit_date_due.clear();
+            app.edit_reminder_date.clear();
+            app.edit_priority = 4; // Magic Number
         },
         KeyCode::Backspace => {
             match app.edit_selection {
                 Edit_Selection::Name => app.edit_name.pop(),
                 Edit_Selection::Description => app.edit_description.pop(),
+                Edit_Selection::DateDue => app.edit_date_due.pop(),
+                Edit_Selection::ReminderDate => app.edit_reminder_date.pop(),
+                // That none is there to satisfy the compiler
+                Edit_Selection::Priority => { app.edit_priority = 0; None}, 
             };
         }, // remove last character
         KeyCode::Enter => {
             match app.edit_selection {
                 Edit_Selection::Name => app.edit_selection = Edit_Selection::Description,
-                Edit_Selection::Description => {
+                Edit_Selection::Description => app.edit_selection = Edit_Selection::DateDue,
+                Edit_Selection::DateDue => app.edit_selection = Edit_Selection::ReminderDate,
+                Edit_Selection::ReminderDate => app.edit_selection = Edit_Selection::Priority,
+                Edit_Selection::Priority => {
                     // Add todo 
                     db::create_todo(
                         &conn_pool, app.edit_name.clone(), Some(app.edit_description.clone()),
-                        None, None, None, 4, None
+                        app.parse_due(), app.parse_reminder(), None, app.edit_priority, None
                     ).await?;
 
                     app.main_content_shown = Content::Daylist;
@@ -423,6 +447,9 @@ async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
 
                     app.edit_name.clear();
                     app.edit_description.clear();
+                    app.edit_date_due.clear();
+                    app.edit_reminder_date.clear();
+                    app.edit_priority = 4; // Magic Number
                     app.edit_selection = Edit_Selection::Name;
                 }
             }
@@ -434,6 +461,20 @@ async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
             match app.edit_selection {
                 Edit_Selection::Name => app.edit_name.push(c),
                 Edit_Selection::Description => app.edit_description.push(c),
+                Edit_Selection::DateDue => app.edit_date_due.push(c),
+                Edit_Selection::ReminderDate => app.edit_reminder_date.push(c),
+                Edit_Selection::Priority => match c {
+                    '1' => app.edit_priority = 1,
+                    '2' => app.edit_priority = 2,
+                    '3' => app.edit_priority = 3,
+                    '4' => app.edit_priority = 4,
+                    '5' => app.edit_priority = 5,
+                    '6' => app.edit_priority = 6,
+                    '7' => app.edit_priority = 7,
+                    '8' => app.edit_priority = 8,
+                    '9' => app.edit_priority = 9,
+                    _ => app.edit_priority = 4,
+                }
             }
         }, 
 

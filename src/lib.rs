@@ -91,6 +91,7 @@ pub mod nav {
 
 pub mod state {
     use tui::layout::Rect;
+    use chrono::{NaiveDateTime, Local};
 
     use crate::nav::Widget;
     use crate::nav::Content;
@@ -103,9 +104,13 @@ pub mod state {
         pub main_context_string: String,
         pub search_results: Vec<Todo>,
 
+        // Might need to extract to a new struct
+        pub edit_selection: Edit_Selection,
         pub edit_name: String,
         pub edit_description: String,
-        pub edit_selection: Edit_Selection,
+        pub edit_date_due: String,
+        pub edit_reminder_date: String,
+        pub edit_priority: i32,
 
         pub focused_widget: Widget,
         pub main_content_shown: Content,
@@ -129,9 +134,13 @@ pub mod state {
                 main_context_string: String::new(),
                 search_results: vec![],
 
+                // Might need to extract to a new struct
+                edit_selection: Edit_Selection::Name,
                 edit_name: String::new(),
                 edit_description: String::new(),
-                edit_selection: Edit_Selection::Name,
+                edit_date_due: String::new(),
+                edit_reminder_date: String::new(),
+                edit_priority: 4,
 
                 focused_widget: Widget::Main,
                 main_content_shown: Content::Daylist,
@@ -141,6 +150,13 @@ pub mod state {
                 
                 upcoming_list: vec![],
             }
+        }
+
+        pub fn parse_due(&self) -> Option<NaiveDateTime> {
+            NaiveDateTime::parse_from_str(self.edit_date_due.as_str(), "%d/%m/%y %H:%M").ok()
+        }
+        pub fn parse_reminder(&self) -> Option<NaiveDateTime> {
+            NaiveDateTime::parse_from_str(self.edit_reminder_date.as_str(), "%d/%m/%y %H:%M").ok()
         }
 
         pub fn is_running(&self) -> bool {
@@ -154,6 +170,9 @@ pub mod state {
     pub enum Edit_Selection {
         Name,
         Description,
+        DateDue,
+        ReminderDate,
+        Priority,
     }
 
     pub struct Layout_State {
