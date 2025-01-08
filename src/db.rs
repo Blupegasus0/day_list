@@ -41,6 +41,14 @@ WHERE todo.title LIKE ? OR todo.description LIKE ?;", search_string1, search_str
         Ok(todos)
     }
 
+    pub async fn fetch_upcoming_todos(conn_pool: &MySqlPool, offset: u32, limit: u32) -> Result<Vec<Todo>, sqlx::Error> {
+        // All database functions must return a Result<T>
+        let todos = sqlx::query_as!(Todo, "SELECT * FROM todo WHERE date_due > CURRENT_DATE()")
+            .fetch_all(conn_pool)
+        .await?;
+        Ok(todos)
+    }
+
     pub async fn create_todo(conn_pool: &MySqlPool, title: String, 
         description: Option<String>, date_due: Option<NaiveDateTime>, 
         reminder_date: Option<NaiveDateTime>, parent_todo: Option<i32>, 

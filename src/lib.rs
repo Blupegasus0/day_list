@@ -97,12 +97,14 @@ pub mod state {
 
 
     pub struct App_State {
+        running: bool,
+
         pub search_string: String,
         pub main_context_string: String,
         pub search_results: Vec<Todo>,
 
-        pub todo_name: String,
-        pub todo_description: String,
+        pub edit_name: String,
+        pub edit_description: String,
         pub edit_selection: Edit_Selection,
 
         pub focused_widget: Widget,
@@ -111,7 +113,7 @@ pub mod state {
         pub todo_items_limit: u32,
         pub todo_items_offset: u32,
 
-        running: bool,
+        pub upcoming_list: Vec<Todo>,
         // ...
     }
 
@@ -121,12 +123,14 @@ pub mod state {
             // do a bunch of calculations...
 
             App_State {
+                running: true,
+
                 search_string: String::new(),
                 main_context_string: String::new(),
                 search_results: vec![],
 
-                todo_name: String::new(),
-                todo_description: String::new(),
+                edit_name: String::new(),
+                edit_description: String::new(),
                 edit_selection: Edit_Selection::Name,
 
                 focused_widget: Widget::Main,
@@ -134,8 +138,8 @@ pub mod state {
 
                 todo_items_limit: 10,
                 todo_items_offset: 0,
-
-                running: true,
+                
+                upcoming_list: vec![],
             }
         }
 
@@ -162,8 +166,8 @@ pub mod state {
         pub logo_block: Rect,
         pub search_box: Rect,
         pub main_content: Rect,
-        pub right_top_block: Rect, // Upcoming
-        pub right_bottom_block: Rect, // Calendar
+        pub upcoming_content: Rect,
+        pub calendar_content: Rect,
         
         pub row: Rect,
         pub bottom_row_list: Rect,
@@ -181,8 +185,8 @@ pub mod state {
                 logo_block: Rect::default(),
                 search_box: Rect::default(),
                 main_content: Rect::default(),
-                right_top_block: Rect::default(),
-                right_bottom_block: Rect::default(),
+                upcoming_content: Rect::default(),
+                calendar_content: Rect::default(),
                 
                 row: Rect::default(),
                 bottom_row_list: Rect::default(),
