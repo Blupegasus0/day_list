@@ -68,32 +68,6 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
         Ok(())
     }
 
-    pub fn format_todo(todo: &Todo) -> String {
-        let mut todo_status = "[ ]";
-        let description = match todo.description.clone() {
-            Some(s) => s,
-            None => "--".to_string(),
-        }; 
-        let date_due = match todo.date_due {
-            Some(d) => d.format("%d/%m/%Y %H:%M:%S").to_string(),
-            _ => String::from("invalid date")
-        };
-        let reminder_date = match todo.reminder_date {
-            Some(d) => d.format("%d/%m/%Y %H:%M:%S").to_string(),
-            _ => String::from("invalid date")
-        };
-
-
-        if todo.status == 1 {
-            todo_status = "[]";
-        }
-
-        format!("\n   {} {}\n       {}\n    {}\n    {}\n    {}\n",
-            todo_status, todo.title, description,
-            reminder_date, date_due, todo.priority
-        )
-    }
-
     pub async fn toggle_todo_status(conn_pool: &MySqlPool, id: Option<i32>) -> Result<(), sqlx::Error> {
         // read todo status
         // set todo status to !status

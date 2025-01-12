@@ -187,20 +187,20 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             let daylist_todos = List::new(
                 todo_list.todos.iter()
-                    .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
+                    .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                     .collect::<Vec<ListItem<'_>>>()) // probably suboptimal
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
             upcoming_content = List::new(
                 app.upcoming_list.iter()
-                    .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
+                    .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                     .collect::<Vec<ListItem<'_>>>()) // probably suboptimal
                 .block(Block::default().borders(Borders::ALL).title("Upcoming"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
             let mut search_results = app.search_results.iter()
-                .map(|todo| ListItem::new(db::format_todo(todo)).style(Style::default().fg(Color::White)))
+                .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                 .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
             let search_content = List::new(search_results)
                 .block(Block::default().borders(Borders::ALL).title("Search Result"))

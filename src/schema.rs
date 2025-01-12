@@ -23,4 +23,33 @@ pub mod schema {
         pub color: Option<String>,
         pub favorite_status: bool,
     }
+
+
+    impl Todo {
+        pub fn format(&self, /* options */) -> String {
+            let mut todo_status = "[ ]";
+            let description = match self.description.clone() {
+                Some(s) => s,
+                None => "--".to_string(),
+            }; 
+            let date_due = match self.date_due {
+                Some(d) => d.format("%d/%m/%Y %H:%M:%S").to_string(),
+                _ => String::from("invalid date")
+            };
+            let reminder_date = match self.reminder_date {
+                Some(d) => d.format("%d/%m/%Y %H:%M:%S").to_string(),
+                _ => String::from("invalid date")
+            };
+
+
+            if self.status == 1 {
+                todo_status = "[]";
+            }
+
+            format!("\n   {} {}\n       {}\n    {}\n    {}\n    {}\n",
+                todo_status, self.title, description,
+                reminder_date, date_due, self.priority
+            )
+        }
+    }
 }
