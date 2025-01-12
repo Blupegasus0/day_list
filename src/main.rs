@@ -60,67 +60,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
         if !app.is_running() { break; } 
 
         terminal.draw(|frame| {
-            // Split the screen into vertical chunks
-            layout.chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Min(0), // main section
-                        Constraint::Length(3), // Bottom row for keyboard shortcuts
-                    ]
-                        .as_ref(),
-                )
-                .split(frame.size());
-
-            // Split the main area into 3 columns
-            layout.columns = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(
-                    [
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(20),
-                    ]
-                        .as_ref(),
-                )
-                .split(layout.chunks[0]);
-
-            // Left column split into 20% and 80% vertically
-            layout.left_column = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Percentage(25),
-                        Constraint::Percentage(75),
-                    ]
-                        .as_ref(),
-                )
-                .split(layout.columns[0]);
-
-            // Center column split with a search bar at the top
-            layout.center_column = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Length(3), // Space for a search bar
-                        Constraint::Min(0),    // The rest of the space
-                    ]
-                        .as_ref(),
-                )
-                .split(layout.columns[1]);
-
-            // Right column split into 2 equal parts vertically
-            layout.right_column = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Percentage(50),
-                        Constraint::Percentage(50),
-                    ]
-                        .as_ref(),
-                )
-                .split(layout.columns[2]);
-
+            layout.structure(frame.size());
 
             // Define the block
             let labels_block = Block::default().title("Projects").borders(Borders::ALL);

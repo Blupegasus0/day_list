@@ -90,9 +90,9 @@ pub mod nav {
 
 
 pub mod state {
-    use tui::layout::Rect;
     use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
     use tui::style::{Color, Style};
+    use tui::layout::{Constraint, Direction, Layout, Rect};
     use chrono::{NaiveDateTime, Local};
 
     use crate::nav::Widget;
@@ -224,6 +224,71 @@ pub mod state {
                 bottom_row_list: Rect::default(),
             }
         }
+
+        pub fn structure(&mut self, frame_size: Rect) {
+            // Split the screen into vertical chunks
+            self.chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Min(0), // main section
+                        Constraint::Length(3), // Bottom row for keyboard shortcuts
+                    ]
+                        .as_ref(),
+                )
+                .split(frame_size);
+
+            // Split the main area into 3 columns
+            self.columns = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(
+                    [
+                        Constraint::Percentage(20),
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(20),
+                    ]
+                        .as_ref(),
+                )
+                .split(self.chunks[0]);
+
+            // Left column split into 20% and 80% vertically
+            self.left_column = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Percentage(25),
+                        Constraint::Percentage(75),
+                    ]
+                        .as_ref(),
+                )
+                .split(self.columns[0]);
+
+            // Center column split with a search bar at the top
+            self.center_column = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Length(3), // Space for a search bar
+                        Constraint::Min(0),    // The rest of the space
+                    ]
+                        .as_ref(),
+                )
+                .split(self.columns[1]);
+
+            // Right column split into 2 equal parts vertically
+            self.right_column = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Percentage(50),
+                        Constraint::Percentage(50),
+                    ]
+                        .as_ref(),
+                )
+                .split(self.columns[2]);
+
+
+        } 
     }
 
     use tui::widgets::ListState;
