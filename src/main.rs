@@ -43,7 +43,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
     // State
     let mut app = App_State::init();
     let mut layout = Layout_State::init();
+
     app.upcoming_list = db::fetch_upcoming_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?;
+    app.todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
+    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?); // ERROR redundant
 
     // Widget Boundaries
     let mut search_bounds = Rect::default();
@@ -51,9 +54,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
     let mut calendar_bounds = Rect::default();
     let mut upcoming_bounds = Rect::default();
 
-
-    // testing daylist state 
-    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
 
     loop {
         // my ghetto way to exit the program, forgot the right way

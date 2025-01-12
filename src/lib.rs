@@ -99,6 +99,7 @@ pub mod state {
 
     pub struct App_State {
         running: bool,
+        pub todo_list: Todo_List,
 
         pub search_string: String,
         pub main_context_string: String,
@@ -129,6 +130,7 @@ pub mod state {
 
             App_State {
                 running: true,
+                todo_list: Todo_List::new(Vec::new()),
 
                 search_string: String::new(),
                 main_context_string: String::new(),
