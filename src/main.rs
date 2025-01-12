@@ -48,13 +48,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
     app.todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
     let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?); // ERROR redundant
 
-    // Widget Boundaries
-    let mut search_bounds = Rect::default();
-    let mut main_bounds = Rect::default();
-    let mut calendar_bounds = Rect::default();
-    let mut upcoming_bounds = Rect::default();
-
-
     loop {
         // my ghetto way to exit the program, forgot the right way
         if !app.is_running() { break; } 
@@ -63,14 +56,14 @@ async fn run() -> Result<(), Box<dyn Error>> {
             layout.structure(frame.size());
 
             // Define the block
-            let labels_block = Block::default().title("Projects").borders(Borders::ALL);
+            let projects_block = Block::default().title("Projects").borders(Borders::ALL);
 
             // State Assignments
             layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
 
             // A list for the bottom row showing keyboard shortcuts
-            let row = Row::new(vec![
+            let bottom_row_list = Row::new(vec![
                 Cell::from("q|Quit"),
                 Cell::from("Esc|Home"),
                 Cell::from("n|New"),
@@ -80,7 +73,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 Cell::from("Tab|Select todo"),
             ]).style(Style::default().fg(Color::Yellow));
 
-            let bottom_row_list = Table::new(vec![row])
+            let bottom_row_content = Table::new(vec![bottom_row_list])
                 .block(Block::default().borders(Borders::ALL))
                 .widths(&[
                     Constraint::Percentage(10),
@@ -157,16 +150,13 @@ async fn run() -> Result<(), Box<dyn Error>> {
             };
 
             // Update boundaries
-            search_bounds = layout.center_column[0];
-            main_bounds = layout.center_column[1];
-            upcoming_bounds = layout.right_column[0];
-            calendar_bounds = layout.right_column[1];
+            layout.update_bounds();
 
 
             frame.render_widget(layout.logo_block.clone(), layout.left_column[0]);
-            frame.render_widget(labels_block, layout.left_column[1]);
+            frame.render_widget(projects_block, layout.left_column[1]);
 
-            frame.render_widget(bottom_row_list, layout.chunks[1]);
+            frame.render_widget(bottom_row_content, layout.chunks[1]);
 
             frame.render_widget(layout.search_box.clone(), layout.center_column[0]);
 
@@ -205,18 +195,18 @@ async fn run() -> Result<(), Box<dyn Error>> {
                         //button, mouse_event.column, mouse_event.row
 
                         // Check if the mouse click is within the bounds of the search bar
-                        if mouse_event.column >= search_bounds.x
-                        && mouse_event.column < search_bounds.x + search_bounds.width
-                        && mouse_event.row >= search_bounds.y
-                        && mouse_event.row < search_bounds.y + search_bounds.height
+                        if mouse_event.column >= layout.search_bounds.x
+                        && mouse_event.column < layout.search_bounds.x + layout.search_bounds.width
+                        && mouse_event.row >= layout.search_bounds.y
+                        && mouse_event.row < layout.search_bounds.y + layout.search_bounds.height
                         {
                             app.focused_widget = Widget::Search;
                         }
 
-                        if mouse_event.column >= main_bounds.x
-                        && mouse_event.column < main_bounds.x + main_bounds.width
-                        && mouse_event.row >= main_bounds.y
-                        && mouse_event.row < main_bounds.y + main_bounds.height
+                        if mouse_event.column >= layout.main_bounds.x
+                        && mouse_event.column < layout.main_bounds.x + layout.main_bounds.width
+                        && mouse_event.row >= layout.main_bounds.y
+                        && mouse_event.row < layout.main_bounds.y + layout.main_bounds.height
                         {
                             app.focused_widget = Widget::Main;
                         }

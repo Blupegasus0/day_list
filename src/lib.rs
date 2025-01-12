@@ -192,9 +192,13 @@ pub mod state {
         pub main_content: List<'a>,
         pub upcoming_content: List<'a>,
         pub calendar_content: List<'a>,
-        
-        pub row: Rect,
-        pub bottom_row_list: Rect,
+        pub bottom_row_content: Rect,
+
+        pub search_bounds: Rect,
+        pub main_bounds: Rect,
+        pub calendar_bounds: Rect,
+        pub upcoming_bounds: Rect,
+
     }
 
     impl Layout_State<'_> {
@@ -220,9 +224,20 @@ pub mod state {
                 calendar_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Calendar")
                     .borders(Borders::ALL)),
 
-                row: Rect::default(),
-                bottom_row_list: Rect::default(),
-            }
+                bottom_row_content: Rect::default(),
+
+                search_bounds: Rect::default(),
+                main_bounds: Rect::default(),
+                calendar_bounds: Rect::default(),
+                upcoming_bounds: Rect::default(),
+        }
+    }
+
+        pub fn update_bounds(&mut self) {
+            self.search_bounds = self.center_column[0];
+            self.main_bounds = self.center_column[1];
+            self.upcoming_bounds = self.right_column[0];
+            self.calendar_bounds = self.right_column[1];
         }
 
         pub fn structure(&mut self, frame_size: Rect) {
