@@ -98,7 +98,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 .split(layout.columns[0]);
 
             // Center column split with a search bar at the top
-            let center_column = Layout::default()
+            layout.center_column = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
@@ -217,8 +217,8 @@ async fn run() -> Result<(), Box<dyn Error>> {
             };
 
             // Update boundaries
-            search_bounds = center_column[0];
-            main_bounds = center_column[1];
+            search_bounds = layout.center_column[0];
+            main_bounds = layout.center_column[1];
             upcoming_bounds = layout.right_column[0];
             calendar_bounds = layout.right_column[1];
 
@@ -228,9 +228,9 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             frame.render_widget(bottom_row_list, layout.chunks[1]);
 
-            frame.render_widget(layout.search_box.clone(), center_column[0]);
+            frame.render_widget(layout.search_box.clone(), layout.center_column[0]);
 
-            frame.render_stateful_widget(layout.main_content.clone(), center_column[1], &mut todo_list.state);
+            frame.render_stateful_widget(layout.main_content.clone(), layout.center_column[1], &mut todo_list.state);
 
             // TODO - Sacrifice rendering these if the terminal size becomes too small
             frame.render_stateful_widget(layout.upcoming_content.clone(), layout.right_column[0], &mut todo_list.state);
