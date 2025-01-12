@@ -91,10 +91,13 @@ pub mod nav {
 
 pub mod state {
     use tui::layout::Rect;
+    use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
+    use tui::style::{Color, Style};
     use chrono::{NaiveDateTime, Local};
 
     use crate::nav::Widget;
     use crate::nav::Content;
+    use crate::{LOGO, LOGO2, LOGO3, LOGO4};
 
 
     pub struct App_State {
@@ -177,45 +180,53 @@ pub mod state {
         Priority,
     }
 
-    pub struct Layout_State {
-        pub chunks: Rect,
-        pub columns: Rect,
-        pub left_column: Rect,
-        pub center_column: Rect,
-        pub right_column: Rect,
+    pub struct Layout_State<'a> {
+        pub chunks: Vec<Rect>,
+        pub columns: Vec<Rect>,
+        pub left_column: Vec<Rect>,
+        pub center_column: Vec<Rect>,
+        pub right_column: Vec<Rect>,
 
-        pub logo_block: Rect,
-        pub search_box: Rect,
-        pub main_content: Rect,
-        pub upcoming_content: Rect,
-        pub calendar_content: Rect,
+        pub logo_block: Paragraph<'a>,
+        pub search_box: Paragraph<'a>,
+        pub main_content: List<'a>,
+        pub upcoming_content: List<'a>,
+        pub calendar_content: List<'a>,
         
         pub row: Rect,
         pub bottom_row_list: Rect,
     }
 
-    impl Layout_State {
-        pub fn init() -> Layout_State {
+    impl Layout_State<'_> {
+        pub fn init() -> Layout_State<'static> {
             Layout_State {
-                chunks: Rect::default(),
-                columns: Rect::default(),
-                left_column: Rect::default(),
-                center_column: Rect::default(),
-                right_column: Rect::default(),
-                
-                logo_block: Rect::default(),
-                search_box: Rect::default(),
-                main_content: Rect::default(),
-                upcoming_content: Rect::default(),
-                calendar_content: Rect::default(),
-                
+                chunks: vec![],
+                columns: vec![],
+                left_column: vec![],
+                center_column: vec![],
+                right_column: vec![],
+
+                logo_block: Paragraph::new(LOGO4).block(Block::default()).style(Style::default().fg(Color::Yellow)),
+
+                search_box: Paragraph::new(String::from("")).block(Block::default().title("Search")
+                    .borders(Borders::ALL)),
+
+                main_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Daylist")
+                    .borders(Borders::ALL)),
+
+                upcoming_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Upcoming")
+                    .borders(Borders::ALL)),
+
+                calendar_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Calendar")
+                    .borders(Borders::ALL)),
+
                 row: Rect::default(),
                 bottom_row_list: Rect::default(),
             }
         }
     }
 
-    use tui::widgets::{ListItem, ListState};
+    use tui::widgets::ListState;
     use crate::schema::schema::Todo;
     pub struct Todo_List {
         pub todos: Vec<Todo>,

@@ -59,9 +59,9 @@ async fn run() -> Result<(), Box<dyn Error>> {
         // my ghetto way to exit the program, forgot the right way
         if !app.is_running() { break; } 
 
-        terminal.draw(|f| {
+        terminal.draw(|frame| {
             // Split the screen into vertical chunks
-            let chunks = Layout::default()
+            layout.chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
@@ -70,10 +70,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     ]
                         .as_ref(),
                 )
-                .split(f.size());
+                .split(frame.size());
 
             // Split the main area into 3 columns
-            let columns = Layout::default()
+            layout.columns = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints(
                     [
@@ -83,10 +83,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     ]
                         .as_ref(),
                 )
-                .split(chunks[0]);
+                .split(layout.chunks[0]);
 
             // Left column split into 20% and 80% vertically
-            let left_column = Layout::default()
+            layout.left_column = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
@@ -95,7 +95,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     ]
                         .as_ref(),
                 )
-                .split(columns[0]);
+                .split(layout.columns[0]);
 
             // Center column split with a search bar at the top
             let center_column = Layout::default()
@@ -107,10 +107,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     ]
                         .as_ref(),
                 )
-                .split(columns[1]);
+                .split(layout.columns[1]);
 
             // Right column split into 2 equal parts vertically
-            let right_column = Layout::default()
+            layout.right_column = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
                     [
@@ -119,24 +119,14 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     ]
                         .as_ref(),
                 )
-                .split(columns[2]);
+                .split(layout.columns[2]);
 
 
             // Define the block
-            let logo_block = Paragraph::new(DayList::LOGO4).block(Block::default()).style(Style::default().fg(Color::Yellow));
             let labels_block = Block::default().title("Projects").borders(Borders::ALL);
 
             // State Assignments
-            let mut search_box = Paragraph::new(app.search_string.as_ref()).block(Block::default().title("Search")
-                .borders(Borders::ALL));
-
-            let mut main_content = List::new([ListItem::new("")].to_vec()).block(Block::default().title("Daylist")
-                .borders(Borders::ALL));
-
-            let mut upcoming_content = List::new([ListItem::new("")].to_vec()).block(Block::default().title("Upcoming")
-                .borders(Borders::ALL));
-
-            let mut calendar_content = List::new([ListItem::new("")].to_vec()).block(Block::default().title("Calendar")
+            layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
 
             // A list for the bottom row showing keyboard shortcuts
@@ -192,7 +182,10 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL).title("List"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
-            upcoming_content = List::new(
+            // Initialize calendar content here
+            // It is remaining yellow after selection because it is not being reset here
+
+            layout.upcoming_content = List::new(
                 app.upcoming_list.iter()
                     .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                     .collect::<Vec<ListItem<'_>>>()) // probably suboptimal
@@ -208,40 +201,40 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
 
             match app.main_content_shown {
-                Content::Daylist => main_content = daylist_todos,
-                Content::Edit_Todo => main_content = edit_todo,
-                Content::Search_Results => main_content = search_content,
+                Content::Daylist => layout.main_content = daylist_todos,
+                Content::Edit_Todo => layout.main_content = edit_todo,
+                Content::Search_Results => layout.main_content = search_content,
                 _ => {},
             }
 
             // Display the focused widget in the main content area
             match app.focused_widget {
-                Widget::Main => main_content = main_content.style(Style::default().fg(Color::Yellow)),
-                Widget::Search => search_box = search_box.style(Style::default().fg(Color::Yellow)),
-                Widget::Calendar => calendar_content = calendar_content.style(Style::default().fg(Color::Yellow)),
-                Widget::Upcoming => upcoming_content = upcoming_content.style(Style::default().fg(Color::Yellow)),
-                _ => main_content = main_content.style(Style::default().fg(Color::Yellow)),
+                Widget::Main => layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow)),
+                Widget::Search => layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow)),
+                Widget::Calendar => layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow)),
+                Widget::Upcoming => layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow)),
+                _ => layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow)),
             };
 
             // Update boundaries
             search_bounds = center_column[0];
             main_bounds = center_column[1];
-            upcoming_bounds = right_column[0];
-            calendar_bounds = right_column[1];
+            upcoming_bounds = layout.right_column[0];
+            calendar_bounds = layout.right_column[1];
 
 
-            f.render_widget(logo_block, left_column[0]);
-            f.render_widget(labels_block, left_column[1]);
+            frame.render_widget(layout.logo_block.clone(), layout.left_column[0]);
+            frame.render_widget(labels_block, layout.left_column[1]);
 
-            f.render_widget(bottom_row_list, chunks[1]);
+            frame.render_widget(bottom_row_list, layout.chunks[1]);
 
-            f.render_widget(search_box, center_column[0]);
+            frame.render_widget(layout.search_box.clone(), center_column[0]);
 
-            f.render_stateful_widget(main_content, center_column[1], &mut todo_list.state);
+            frame.render_stateful_widget(layout.main_content.clone(), center_column[1], &mut todo_list.state);
 
             // TODO - Sacrifice rendering these if the terminal size becomes too small
-            f.render_stateful_widget(upcoming_content, right_column[0], &mut todo_list.state);
-            f.render_stateful_widget(calendar_content, right_column[1], &mut todo_list.state);
+            frame.render_stateful_widget(layout.upcoming_content.clone(), layout.right_column[0], &mut todo_list.state);
+            frame.render_stateful_widget(layout.calendar_content.clone(), layout.right_column[1], &mut todo_list.state);
 
             //render_layout(layout, &mut f);
         })?;
@@ -313,7 +306,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
 } //main
 
 
-fn render_layout<B>(layout: Layout_State, f: tui::Frame<B>) -> Layout_State where B: Backend {
+fn render_layout<'a, B>(layout: Layout_State<'a>, f: tui::Frame<'a, B>) -> Layout_State<'a> where B: Backend {
     layout
 }
 
