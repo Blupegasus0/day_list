@@ -161,10 +161,9 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 Cell::from("q|Quit"),
                 Cell::from("Esc|Home"),
                 Cell::from("n|New"),
-                Cell::from("d|Complete todo"),
-                Cell::from("X|Delete todo"),
-                Cell::from("L|List todos"),
-                Cell::from("Tab|Navigate Todos"),
+                Cell::from("X|Delete"),
+                Cell::from("e|Edit"),
+                Cell::from("Tab|Navigate Projects"),
             ];
 
             let mut current_keybinds = default_keybinds;
