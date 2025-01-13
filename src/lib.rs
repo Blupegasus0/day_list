@@ -191,7 +191,7 @@ pub mod state {
         pub search_box: Paragraph<'a>,
         pub main_content: List<'a>,
         pub upcoming_content: List<'a>,
-        pub calendar_content: List<'a>,
+        pub calendar_content: Table<'a>,
         pub bottom_row_content: Table<'a>,
 
         pub search_bounds: Rect,
@@ -221,8 +221,16 @@ pub mod state {
                 upcoming_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Upcoming")
                     .borders(Borders::ALL)),
 
-                calendar_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Calendar")
-                    .borders(Borders::ALL)),
+                calendar_content: Table::new(vec![])
+                    .block(Block::default().borders(Borders::ALL))
+                    .widths(&[
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(15),
+                        Constraint::Percentage(15),
+                        Constraint::Percentage(15),
+                    ]),
 
                 bottom_row_content: Table::new(vec![])
                     .block(Block::default().borders(Borders::ALL))

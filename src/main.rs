@@ -121,35 +121,94 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 _ => {},
             }
 
-            // Display the focused widget in the main content area
-            match app.focused_widget {
-                Widget::Main => {
-                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
-                }
-                Widget::Search => {
-                    layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow));
-                }
-                Widget::Calendar => {
-                    layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow));
-                }
-                Widget::Upcoming => {
-                    layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow));
-                }
-                _ => {
-                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
-                }
-            };
-
             // A list for the bottom row showing keyboard shortcuts
-            let bottom_row_list = Row::new(vec![
+            let default_keybinds = vec![
                 Cell::from("q|Quit"),
                 Cell::from("Esc|Home"),
                 Cell::from("n|New"),
                 Cell::from("d|Complete todo"),
                 Cell::from("X|Delete todo"),
                 Cell::from("L|List todos"),
-                Cell::from("Tab|Select todo"),
-            ]).style(Style::default().fg(Color::Yellow));
+                Cell::from("Tab|Navigate Todos"),
+            ];
+            
+            let search_keybinds = vec![
+                Cell::from("Esc|Home"),
+                Cell::from("d|Complete todo"),
+                Cell::from("X|Delete todo"),
+                Cell::from("Tab|Navigate Todos"),
+            ];
+            
+            let calendar_keybinds = vec![
+                Cell::from("q|Quit"),
+                Cell::from("Esc|Home"),
+                Cell::from("n|New"),
+                Cell::from("Tab|Navigate Todos"),
+                Cell::from("Arrows|Navigate Calendar"),
+            ];
+            
+            let upcoming_keybinds = vec![
+                Cell::from("q|Quit"),
+                Cell::from("Esc|Home"),
+                Cell::from("n|New"),
+                Cell::from("d|Complete todo"),
+                Cell::from("X|Delete todo"),
+                Cell::from("L|List todos"),
+                Cell::from("Tab|Navigate Todos"),
+            ];
+            
+            let project_keybinds = vec![
+                Cell::from("q|Quit"),
+                Cell::from("Esc|Home"),
+                Cell::from("n|New"),
+                Cell::from("d|Complete todo"),
+                Cell::from("X|Delete todo"),
+                Cell::from("L|List todos"),
+                Cell::from("Tab|Navigate Todos"),
+            ];
+
+            let mut current_keybinds = default_keybinds;
+            
+            // Display the focused widget in the main content area
+            match app.focused_widget {
+                Widget::Main => {
+                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
+                    // default keybinds
+                }
+                Widget::Search => {
+                    layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow));
+                    current_keybinds = search_keybinds;
+                }
+                Widget::Calendar => {
+                    layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow));
+                    current_keybinds = calendar_keybinds;
+                }
+                Widget::Upcoming => {
+                    layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow));
+                    current_keybinds = upcoming_keybinds;
+                }
+                _ => {
+                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
+                    // default keybinds
+                }
+            };
+
+            let bottom_row_list = Row::new(current_keybinds).style(Style::default().fg(Color::Yellow));
+
+            let days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
+            let week = ["1","1","1","1","1","1","1"];
+            let day_row = Row::new(days).style(Style::default().fg(Color::Yellow));
+            let week_row = Row::new(week).style(Style::default().fg(Color::Yellow));
+            layout.calendar_content = Table::new(vec![day_row, week_row.clone(), week_row.clone(), week_row.clone(), week_row.clone(), week_row])
+                .block(Block::default().borders(Borders::ALL))
+                .widths(&[
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(15),
+                ]);
 
             layout.bottom_row_content = Table::new(vec![bottom_row_list])
                 .block(Block::default().borders(Borders::ALL))
@@ -174,7 +233,8 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             // TODO - Sacrifice rendering these if the terminal size becomes too small
             frame.render_stateful_widget(layout.upcoming_content.clone(), layout.right_column[0], &mut todo_list.state);
-            frame.render_stateful_widget(layout.calendar_content.clone(), layout.right_column[1], &mut todo_list.state);
+            // Supposed to be stateful but I need to create a struct for tables
+            frame.render_widget(layout.calendar_content.clone(), layout.right_column[1]);
 
             //render_layout(layout, &mut f);
         })?;
