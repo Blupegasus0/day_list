@@ -56,13 +56,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
             layout.structure(frame.size());
             layout.update_bounds();
 
-            // Define the block
-            let projects_block = Block::default().title("Projects").borders(Borders::ALL);
-
-            // State Assignments
-            layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
-                .borders(Borders::ALL));
-
             // Edit todo... {
             let edit_string = format!("
                 Title: {}
@@ -106,13 +99,15 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 .block(Block::default().borders(Borders::ALL).title("Upcoming"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item
 
+            //let search_content = generate_search_results(&app, &mut layout); // ERROR
+            layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
+                .borders(Borders::ALL));
             let mut search_results = app.search_results.iter()
                 .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                 .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
             let search_content = List::new(search_results)
                 .block(Block::default().borders(Borders::ALL).title("Search Result"))
                 .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item);
-
 
             match app.main_content_shown {
                 Content::Daylist => layout.main_content = daylist_todos,
@@ -121,22 +116,9 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 _ => {},
             }
 
+            let projects_block = Block::default().title("Projects").borders(Borders::ALL);
 
-            let days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
-            let week = ["1","1","1","1","1","1","1"];
-            let day_row = Row::new(days).style(Style::default().fg(Color::Yellow));
-
-            let week_row = Row::new(week).style(Style::default().fg(Color::Yellow));
-            layout.calendar_content = Table::new(vec![day_row, week_row.clone(), week_row.clone(), week_row.clone(), week_row.clone(), week_row])
-                .block(Block::default().borders(Borders::ALL))
-                .widths(&[
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(15),
-                ]);
+            generate_calendar(&mut layout);
 
             show_focused_widget(&app, &mut layout);
 
@@ -223,6 +205,38 @@ async fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 } //main
 
+fn generate_search_results<'a>(app: &'a App_State, layout: &'a mut Layout_State<'a>) -> List<'a> {
+            layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
+                .borders(Borders::ALL));
+            let mut search_results = app.search_results.iter()
+                .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
+                .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
+            let search_content = List::new(search_results)
+                .block(Block::default().borders(Borders::ALL).title("Search Result"))
+                .highlight_style(Style::default().fg(Color::Yellow).bg(Color::Black)); // Highlight the selected item);
+
+            search_content
+}
+
+fn generate_calendar(layout: &mut Layout_State) {
+    // ERROR calendar proof of concept
+    let days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
+    let week = ["1","1","1","1","1","1","1"];
+    let day_row = Row::new(days).style(Style::default().fg(Color::Yellow));
+    let week_row = Row::new(week).style(Style::default().fg(Color::Yellow));
+
+    layout.calendar_content = Table::new(vec![day_row, week_row.clone(), week_row.clone(), week_row.clone(), week_row.clone(), week_row])
+        .block(Block::default().borders(Borders::ALL))
+        .widths(&[
+            Constraint::Percentage(10),
+            Constraint::Percentage(10),
+            Constraint::Percentage(10),
+            Constraint::Percentage(15),
+            Constraint::Percentage(15),
+            Constraint::Percentage(15),
+        ]);
+}
+
 fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
     // A list for the bottom row showing keyboard shortcuts
     let default_keybinds = vec![
@@ -240,6 +254,7 @@ fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
         Cell::from("d|Complete todo"),
         Cell::from("X|Delete todo"),
         Cell::from("Tab|Navigate Todos"),
+        Cell::from("Enter|Search!"),
     ];
 
     let calendar_keybinds = vec![
