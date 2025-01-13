@@ -121,7 +121,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 _ => {},
             }
 
-            show_focused_widget(&app, &mut layout);
 
             let days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
             let week = ["1","1","1","1","1","1","1"];
@@ -138,6 +137,8 @@ async fn run() -> Result<(), Box<dyn Error>> {
                     Constraint::Percentage(15),
                     Constraint::Percentage(15),
                 ]);
+
+            show_focused_widget(&app, &mut layout);
 
             frame.render_widget(layout.logo_block.clone(), layout.left_column[0]);
             frame.render_widget(projects_block, layout.left_column[1]);
@@ -223,89 +224,89 @@ async fn run() -> Result<(), Box<dyn Error>> {
 } //main
 
 fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
-            // A list for the bottom row showing keyboard shortcuts
-            let default_keybinds = vec![
-                Cell::from("q|Quit"),
-                Cell::from("Esc|Home"),
-                Cell::from("n|New"),
-                Cell::from("d|Complete todo"),
-                Cell::from("X|Delete todo"),
-                Cell::from("L|List todos"),
-                Cell::from("Tab|Navigate Todos"),
-            ];
-            
-            let search_keybinds = vec![
-                Cell::from("Esc|Home"),
-                Cell::from("d|Complete todo"),
-                Cell::from("X|Delete todo"),
-                Cell::from("Tab|Navigate Todos"),
-            ];
-            
-            let calendar_keybinds = vec![
-                Cell::from("q|Quit"),
-                Cell::from("Esc|Home"),
-                Cell::from("n|New"),
-                Cell::from("Tab|Navigate Todos"),
-                Cell::from("Arrows|Navigate Calendar"),
-            ];
-            
-            let upcoming_keybinds = vec![
-                Cell::from("q|Quit"),
-                Cell::from("Esc|Home"),
-                Cell::from("n|New"),
-                Cell::from("d|Complete todo"),
-                Cell::from("X|Delete todo"),
-                Cell::from("L|List todos"),
-                Cell::from("Tab|Navigate Todos"),
-            ];
-            
-            let project_keybinds = vec![
-                Cell::from("q|Quit"),
-                Cell::from("Esc|Home"),
-                Cell::from("n|New"),
-                Cell::from("X|Delete"),
-                Cell::from("e|Edit"),
-                Cell::from("Tab|Navigate Projects"),
-            ];
+    // A list for the bottom row showing keyboard shortcuts
+    let default_keybinds = vec![
+        Cell::from("q|Quit"),
+        Cell::from("Esc|Home"),
+        Cell::from("n|New"),
+        Cell::from("d|Complete todo"),
+        Cell::from("X|Delete todo"),
+        Cell::from("L|List todos"),
+        Cell::from("Tab|Navigate Todos"),
+    ];
 
-            let mut current_keybinds = default_keybinds;
-            
-            // Display the focused widget in the main content area
-            match app.focused_widget {
-                Widget::Main => {
-                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
-                    // default keybinds
-                }
-                Widget::Search => {
-                    layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow));
-                    current_keybinds = search_keybinds;
-                }
-                Widget::Calendar => {
-                    layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow));
-                    current_keybinds = calendar_keybinds;
-                }
-                Widget::Upcoming => {
-                    layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow));
-                    current_keybinds = upcoming_keybinds;
-                }
-                _ => {
-                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
-                    // default keybinds
-                }
-            };
+    let search_keybinds = vec![
+        Cell::from("Esc|Home"),
+        Cell::from("d|Complete todo"),
+        Cell::from("X|Delete todo"),
+        Cell::from("Tab|Navigate Todos"),
+    ];
 
-            let bottom_row_list = Row::new(current_keybinds).style(Style::default().fg(Color::Yellow));
+    let calendar_keybinds = vec![
+        Cell::from("q|Quit"),
+        Cell::from("Esc|Home"),
+        Cell::from("n|New"),
+        Cell::from("Tab|Navigate Todos"),
+        Cell::from("Arrows|Navigate Calendar"),
+    ];
 
-            layout.bottom_row_content = Table::new(vec![bottom_row_list])
-                .block(Block::default().borders(Borders::ALL))
-                .widths(&[
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(15),
-                ]);
+    let upcoming_keybinds = vec![
+        Cell::from("q|Quit"),
+        Cell::from("Esc|Home"),
+        Cell::from("n|New"),
+        Cell::from("d|Complete todo"),
+        Cell::from("X|Delete todo"),
+        Cell::from("L|List todos"),
+        Cell::from("Tab|Navigate Todos"),
+    ];
+
+    let project_keybinds = vec![
+        Cell::from("q|Quit"),
+        Cell::from("Esc|Home"),
+        Cell::from("n|New"),
+        Cell::from("X|Delete"),
+        Cell::from("e|Edit"),
+        Cell::from("Tab|Navigate Projects"),
+    ];
+
+    let mut current_keybinds = default_keybinds;
+
+    // Display the focused widget in the main content area
+    match app.focused_widget {
+        Widget::Main => {
+            layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
+            // default keybinds
+        }
+        Widget::Search => {
+            layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow));
+            current_keybinds = search_keybinds;
+        }
+        Widget::Calendar => {
+            layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow));
+            current_keybinds = calendar_keybinds;
+        }
+        Widget::Upcoming => {
+            layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow));
+            current_keybinds = upcoming_keybinds;
+        }
+        _ => {
+            layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
+            // default keybinds
+        }
+    };
+
+    let bottom_row_list = Row::new(current_keybinds).style(Style::default().fg(Color::Yellow));
+
+    layout.bottom_row_content = Table::new(vec![bottom_row_list])
+        .block(Block::default().borders(Borders::ALL))
+        .widths(&[
+            Constraint::Percentage(10),
+            Constraint::Percentage(10),
+            Constraint::Percentage(10),
+            Constraint::Percentage(15),
+            Constraint::Percentage(15),
+            Constraint::Percentage(15),
+        ]);
 
 }
 
