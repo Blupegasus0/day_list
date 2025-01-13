@@ -54,6 +54,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
         terminal.draw(|frame| {
             layout.structure(frame.size());
+            layout.update_bounds();
 
             // Define the block
             let projects_block = Block::default().title("Projects").borders(Borders::ALL);
@@ -62,28 +63,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
 
-            // A list for the bottom row showing keyboard shortcuts
-            let bottom_row_list = Row::new(vec![
-                Cell::from("q|Quit"),
-                Cell::from("Esc|Home"),
-                Cell::from("n|New"),
-                Cell::from("d|Complete todo"),
-                Cell::from("X|Delete todo"),
-                Cell::from("L|List todos"),
-                Cell::from("Tab|Select todo"),
-            ]).style(Style::default().fg(Color::Yellow));
-
-            let bottom_row_content = Table::new(vec![bottom_row_list])
-                .block(Block::default().borders(Borders::ALL))
-                .widths(&[
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(15),
-                ]);
-
+            // Edit todo... {
             let edit_string = format!("
                 Title: {}
                
@@ -107,6 +87,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             let edit_todo = List::new(edit_item)
                 .block(Block::default().borders(Borders::ALL))
                 .highlight_style(Style::default());
+            // Edit todo... }
 
             let daylist_todos = List::new(
                 todo_list.todos.iter()
@@ -142,21 +123,50 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             // Display the focused widget in the main content area
             match app.focused_widget {
-                Widget::Main => layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow)),
-                Widget::Search => layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow)),
-                Widget::Calendar => layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow)),
-                Widget::Upcoming => layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow)),
-                _ => layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow)),
+                Widget::Main => {
+                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
+                }
+                Widget::Search => {
+                    layout.search_box = layout.search_box.clone().style(Style::default().fg(Color::Yellow));
+                }
+                Widget::Calendar => {
+                    layout.calendar_content = layout.calendar_content.clone().style(Style::default().fg(Color::Yellow));
+                }
+                Widget::Upcoming => {
+                    layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow));
+                }
+                _ => {
+                    layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));
+                }
             };
 
-            // Update boundaries
-            layout.update_bounds();
+            // A list for the bottom row showing keyboard shortcuts
+            let bottom_row_list = Row::new(vec![
+                Cell::from("q|Quit"),
+                Cell::from("Esc|Home"),
+                Cell::from("n|New"),
+                Cell::from("d|Complete todo"),
+                Cell::from("X|Delete todo"),
+                Cell::from("L|List todos"),
+                Cell::from("Tab|Select todo"),
+            ]).style(Style::default().fg(Color::Yellow));
+
+            layout.bottom_row_content = Table::new(vec![bottom_row_list])
+                .block(Block::default().borders(Borders::ALL))
+                .widths(&[
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(15),
+                ]);
 
 
             frame.render_widget(layout.logo_block.clone(), layout.left_column[0]);
             frame.render_widget(projects_block, layout.left_column[1]);
 
-            frame.render_widget(bottom_row_content, layout.chunks[1]);
+            frame.render_widget(layout.bottom_row_content.clone(), layout.chunks[1]);
 
             frame.render_widget(layout.search_box.clone(), layout.center_column[0]);
 

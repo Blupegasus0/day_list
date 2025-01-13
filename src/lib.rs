@@ -192,7 +192,7 @@ pub mod state {
         pub main_content: List<'a>,
         pub upcoming_content: List<'a>,
         pub calendar_content: List<'a>,
-        pub bottom_row_content: Rect,
+        pub bottom_row_content: Table<'a>,
 
         pub search_bounds: Rect,
         pub main_bounds: Rect,
@@ -224,155 +224,164 @@ pub mod state {
                 calendar_content: List::new([ListItem::new("")].to_vec()).block(Block::default().title("Calendar")
                     .borders(Borders::ALL)),
 
-                bottom_row_content: Rect::default(),
+                bottom_row_content: Table::new(vec![])
+                    .block(Block::default().borders(Borders::ALL))
+                    .widths(&[
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(15),
+                        Constraint::Percentage(15),
+                        Constraint::Percentage(15),
+                    ]),
 
-                search_bounds: Rect::default(),
-                main_bounds: Rect::default(),
-                calendar_bounds: Rect::default(),
-                upcoming_bounds: Rect::default(),
+            search_bounds: Rect::default(),
+            main_bounds: Rect::default(),
+            calendar_bounds: Rect::default(),
+            upcoming_bounds: Rect::default(),
         }
     }
 
-        pub fn update_bounds(&mut self) {
-            self.search_bounds = self.center_column[0];
-            self.main_bounds = self.center_column[1];
-            self.upcoming_bounds = self.right_column[0];
-            self.calendar_bounds = self.right_column[1];
+    pub fn update_bounds(&mut self) {
+        self.search_bounds = self.center_column[0];
+        self.main_bounds = self.center_column[1];
+        self.upcoming_bounds = self.right_column[0];
+        self.calendar_bounds = self.right_column[1];
+    }
+
+    pub fn structure(&mut self, frame_size: Rect) {
+        // Split the screen into vertical chunks
+        self.chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Min(0), // main section
+                    Constraint::Length(3), // Bottom row for keyboard shortcuts
+                ]
+                    .as_ref(),
+            )
+            .split(frame_size);
+
+        // Split the main area into 3 columns
+        self.columns = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(
+                [
+                    Constraint::Percentage(20),
+                    Constraint::Percentage(60),
+                    Constraint::Percentage(20),
+                ]
+                    .as_ref(),
+            )
+            .split(self.chunks[0]);
+
+        // Left column split into 20% and 80% vertically
+        self.left_column = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Percentage(25),
+                    Constraint::Percentage(75),
+                ]
+                    .as_ref(),
+            )
+            .split(self.columns[0]);
+
+        // Center column split with a search bar at the top
+        self.center_column = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Length(3), // Space for a search bar
+                    Constraint::Min(0),    // The rest of the space
+                ]
+                    .as_ref(),
+            )
+            .split(self.columns[1]);
+
+        // Right column split into 2 equal parts vertically
+        self.right_column = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(
+                [
+                    Constraint::Percentage(50),
+                    Constraint::Percentage(50),
+                ]
+                    .as_ref(),
+            )
+            .split(self.columns[2]);
+
+
+    } 
+}
+
+use tui::widgets::ListState;
+use crate::schema::schema::Todo;
+pub struct Todo_List {
+    pub todos: Vec<Todo>,
+    pub state: ListState,
+}
+
+impl Todo_List {
+    pub fn new(todos: Vec<Todo>) -> Todo_List {
+        Todo_List {
+            todos,
+            state: ListState::default(),
         }
-
-        pub fn structure(&mut self, frame_size: Rect) {
-            // Split the screen into vertical chunks
-            self.chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Min(0), // main section
-                        Constraint::Length(3), // Bottom row for keyboard shortcuts
-                    ]
-                        .as_ref(),
-                )
-                .split(frame_size);
-
-            // Split the main area into 3 columns
-            self.columns = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(
-                    [
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(60),
-                        Constraint::Percentage(20),
-                    ]
-                        .as_ref(),
-                )
-                .split(self.chunks[0]);
-
-            // Left column split into 20% and 80% vertically
-            self.left_column = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Percentage(25),
-                        Constraint::Percentage(75),
-                    ]
-                        .as_ref(),
-                )
-                .split(self.columns[0]);
-
-            // Center column split with a search bar at the top
-            self.center_column = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Length(3), // Space for a search bar
-                        Constraint::Min(0),    // The rest of the space
-                    ]
-                        .as_ref(),
-                )
-                .split(self.columns[1]);
-
-            // Right column split into 2 equal parts vertically
-            self.right_column = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints(
-                    [
-                        Constraint::Percentage(50),
-                        Constraint::Percentage(50),
-                    ]
-                        .as_ref(),
-                )
-                .split(self.columns[2]);
-
-
-        } 
     }
 
-    use tui::widgets::ListState;
-    use crate::schema::schema::Todo;
-    pub struct Todo_List {
-        pub todos: Vec<Todo>,
-        pub state: ListState,
+    pub fn set_todos(&mut self, todos: Vec<Todo>) {
+        self.todos = todos;
+        self.state = ListState::default(); // Reset the state since the items have changed
     }
 
-    impl Todo_List {
-        pub fn new(todos: Vec<Todo>) -> Todo_List {
-            Todo_List {
-                todos,
-                state: ListState::default(),
+    // Select the next item. This will not be reflected until the widget is drawn in the
+    // `Terminal::draw` callback using `Frame::render_stateful_widget`.
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.todos.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
             }
-        }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
 
-        pub fn set_todos(&mut self, todos: Vec<Todo>) {
-            self.todos = todos;
-            self.state = ListState::default(); // Reset the state since the items have changed
-        }
-
-        // Select the next item. This will not be reflected until the widget is drawn in the
-        // `Terminal::draw` callback using `Frame::render_stateful_widget`.
-        pub fn next(&mut self) {
-            let i = match self.state.selected() {
-                Some(i) => {
-                    if i >= self.todos.len() - 1 {
-                        0
-                    } else {
-                        i + 1
-                    }
+    // Select the previous item. This will not be reflected until the widget is drawn in the
+    // `Terminal::draw` callback using `Frame::render_stateful_widget`.
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.todos.len() - 1
+                } else {
+                    i - 1
                 }
-                None => 0,
-            };
-            self.state.select(Some(i));
-        }
-
-        // Select the previous item. This will not be reflected until the widget is drawn in the
-        // `Terminal::draw` callback using `Frame::render_stateful_widget`.
-        pub fn previous(&mut self) {
-            let i = match self.state.selected() {
-                Some(i) => {
-                    if i == 0 {
-                        self.todos.len() - 1
-                    } else {
-                        i - 1
-                    }
-                }
-                None => 0,
-            };
-            self.state.select(Some(i));
-        }
-
-        // Unselect the currently selected item if any. The implementation of `ListState` makes
-        // sure that the stored offset is also reset.
-        pub fn unselect(&mut self) {
-            self.state.select(None);
-        }
-
-        pub fn get_selected_id(&self) -> Option<i32> {
-            match self.state.selected() {
-                Some(i) => {
-                    Some(self.todos[i].todo_id)
-                }
-                None => None
             }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    // Unselect the currently selected item if any. The implementation of `ListState` makes
+    // sure that the stored offset is also reset.
+    pub fn unselect(&mut self) {
+        self.state.select(None);
+    }
+
+    pub fn get_selected_id(&self) -> Option<i32> {
+        match self.state.selected() {
+            Some(i) => {
+                Some(self.todos[i].todo_id)
+            }
+            None => None
         }
     }
+}
 }
 
 pub mod utils {
