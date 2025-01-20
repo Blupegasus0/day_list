@@ -116,14 +116,19 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 _ => {},
             }
 
-            let projects_block = Block::default().title("Projects").borders(Borders::ALL);
+            // actually put content in that mf. 
+            // Later extract to its own generate function
+            layout.projects_content = List::new(vec![])
+                .block(Block::default().title("Projects").borders(Borders::ALL))
+                .highlight_style(Style::default());
+
 
             generate_calendar(&mut layout);
 
             show_focused_widget(&app, &mut layout);
 
             frame.render_widget(layout.logo_block.clone(), layout.left_column[0]);
-            frame.render_widget(projects_block, layout.left_column[1]);
+            frame.render_widget(layout.projects_content.clone(), layout.left_column[1]);
 
             frame.render_widget(layout.bottom_row_content.clone(), layout.chunks[1]);
 
@@ -275,7 +280,7 @@ fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
         Cell::from("Tab|Navigate Todos"),
     ];
 
-    let project_keybinds = vec![
+    let projects_keybinds = vec![
         Cell::from("q|Quit"),
         Cell::from("Esc|Home"),
         Cell::from("n|New"),
@@ -303,6 +308,10 @@ fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
         Widget::Upcoming => {
             layout.upcoming_content = layout.upcoming_content.clone().style(Style::default().fg(Color::Yellow));
             current_keybinds = upcoming_keybinds;
+        }
+        Widget::Projects => {
+            layout.projects_content = layout.projects_content.clone().style(Style::default().fg(Color::Yellow));
+            current_keybinds = projects_keybinds;
         }
         _ => {
             layout.main_content = layout.main_content.clone().style(Style::default().fg(Color::Yellow));

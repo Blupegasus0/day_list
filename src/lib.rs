@@ -46,6 +46,7 @@ pub mod nav {
         Main,
         Search,
         Upcoming,
+        Projects,
     }
 
     impl Widget {
@@ -53,35 +54,39 @@ pub mod nav {
             match &self {
                 Widget::Calendar => Widget::Upcoming,
                 Widget::Main => Widget::Search,
-                Widget::Search => Widget::Search,
-                Widget::Upcoming => Widget::Upcoming,
+                Widget::Search => Widget::Search, // do nothing
+                Widget::Upcoming => Widget::Upcoming, // do nothing
+                Widget::Projects => Widget::Projects, // do nothing
                 _ => Widget::Main,
             }
         }
         pub fn down(&self) -> Widget {
             match &self {
-                Widget::Calendar => Widget::Calendar,
-                Widget::Main => Widget::Main,
+                Widget::Calendar => Widget::Calendar, // do nothing
+                Widget::Main => Widget::Main, // do nothing
                 Widget::Search => Widget::Main,
                 Widget::Upcoming => Widget::Calendar,
+                Widget::Projects => Widget::Projects, // do nothing
                 _ => Widget::Main,
             }
         }
         pub fn left(&self) -> Widget {
             match &self {
                 Widget::Calendar => Widget::Main,
-                Widget::Main => Widget::Main, // Not implemented yet
-                Widget::Search => Widget::Search, // Not implemented yet,
+                Widget::Main => Widget::Projects,
+                Widget::Search => Widget::Search, // do nothing
                 Widget::Upcoming => Widget::Main,
+                Widget::Projects => Widget::Projects, // do nothing
                 _ => Widget::Main,
             }
         }
         pub fn right(&self) -> Widget {
             match &self {
-                Widget::Calendar => Widget::Calendar,
+                Widget::Calendar => Widget::Calendar, // do nothing
                 Widget::Main => Widget::Calendar,
                 Widget::Search => Widget::Upcoming,
-                Widget::Upcoming => Widget::Upcoming,
+                Widget::Upcoming => Widget::Upcoming, // do nothing
+                Widget::Projects => Widget::Main,
                 _ => Widget::Main,
             }
         }
@@ -192,6 +197,7 @@ pub mod state {
         pub main_content: List<'a>,
         pub upcoming_content: List<'a>,
         pub calendar_content: Table<'a>,
+        pub projects_content: List<'a>,
         pub bottom_row_content: Table<'a>,
 
         pub search_bounds: Rect,
@@ -242,6 +248,11 @@ pub mod state {
                         Constraint::Percentage(15),
                         Constraint::Percentage(15),
                     ]),
+
+            projects_content: List::new(vec![])
+                .block(Block::default().title("Projects").borders(Borders::ALL))
+                .highlight_style(Style::default()),
+
 
             search_bounds: Rect::default(),
             main_bounds: Rect::default(),
