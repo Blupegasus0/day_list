@@ -1,8 +1,8 @@
 pub mod db {
     use crate::schema::schema::Todo;
     
-    use tui::widgets::{List, ListItem};
-    use tui::style::{Color, Style};
+    //use tui::widgets::{List, ListItem};
+    //use tui::style::{Color, Style};
 
     use sqlx::mysql::MySqlPool;
     use dotenv::dotenv;

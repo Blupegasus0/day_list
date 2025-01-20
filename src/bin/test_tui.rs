@@ -1,3 +1,4 @@
+    /*
 use sqlx::mysql::MySqlPool;
 use sqlx::FromRow;
 use dotenv::dotenv;
@@ -9,7 +10,6 @@ use DayList::db::db;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
-    /*
     // Set up the database connection
     let conn_pool = db::establish_connection().await?;
 
@@ -44,6 +44,9 @@ async fn main() -> Result<(), sqlx::Error> {
         Err(err) => eprintln!("Error fetching todos: {:?}", err),
     }
 
-*/
     Ok(())
 }
+*/
+fn main() {
+        println!("im useless");
+    }

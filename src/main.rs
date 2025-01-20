@@ -2,7 +2,7 @@ use std::error::Error;
 use std::io;
 
 use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent,
-    KeyModifiers, KeyboardEnhancementFlags, PushKeyboardEnhancementFlags,PopKeyboardEnhancementFlags
+    KeyModifiers
 };
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use tui::backend::{Backend, CrosstermBackend};
@@ -12,13 +12,13 @@ use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 use tui::Terminal;
 use sqlx::mysql::MySqlPool;
 
-use DayList::db::db;
-use DayList::nav::Widget;
-use DayList::nav::Content;
-use DayList::state::Todo_List;
-use DayList::state::App_State;
-use DayList::state::Layout_State;
-use DayList::state::Edit_Selection;
+use day_list::db::db;
+use day_list::nav::Widget;
+use day_list::nav::Content;
+use day_list::state::TodoList;
+use day_list::state::AppState;
+use day_list::state::LayoutState;
+use day_list::state::EditSelection;
 
 
 #[tokio::main]
@@ -41,12 +41,12 @@ async fn run() -> Result<(), Box<dyn Error>> {
     let conn_pool = db::establish_connection().await.expect("Failed to connect to db. Try Again.");
 
     // State
-    let mut app = App_State::init();
-    let mut layout = Layout_State::init();
+    let mut app = AppState::init();
+    let mut layout = LayoutState::init();
 
     app.upcoming_list = db::fetch_upcoming_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?;
-    app.todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
-    let mut todo_list = Todo_List::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?); // ERROR redundant
+    app.todo_list = TodoList::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
+    let mut todo_list = TodoList::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?); // ERROR redundant
 
     loop {
         // my ghetto way to exit the program, forgot the right way
@@ -111,8 +111,8 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
             match app.main_content_shown {
                 Content::Daylist => layout.main_content = daylist_todos,
-                Content::Edit_Todo => layout.main_content = edit_todo,
-                Content::Search_Results => layout.main_content = search_content,
+                Content::EditTodo => layout.main_content = edit_todo,
+                Content::SearchResults => layout.main_content = search_content,
                 _ => {},
             }
 
@@ -156,7 +156,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
                 Widget::Main => handle_list_events(key, &mut app, &mut todo_list, &conn_pool).await?,
 
-                Widget::Edit_Todo => handle_edit_events(key, &mut app, &mut todo_list, &conn_pool).await?,
+                Widget::EditTodo => handle_edit_events(key, &mut app, &mut todo_list, &conn_pool).await?,
 
                 // Default Key handling
                 _ => handle_default_events(key, &mut app),
@@ -210,7 +210,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 } //main
 
-fn generate_search_results<'a>(app: &'a App_State, layout: &'a mut Layout_State<'a>) -> List<'a> {
+fn generate_search_results<'a>(app: &'a AppState, layout: &'a mut LayoutState<'a>) -> List<'a> {
             layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
             let mut search_results = app.search_results.iter()
@@ -223,7 +223,7 @@ fn generate_search_results<'a>(app: &'a App_State, layout: &'a mut Layout_State<
             search_content
 }
 
-fn generate_calendar(layout: &mut Layout_State) {
+fn generate_calendar(layout: &mut LayoutState) {
     // ERROR calendar proof of concept
     let days = ["sun", "mon", "tue", "wed", "thur", "fri", "sat"];
     let week = ["1","1","1","1","1","1","1"];
@@ -242,7 +242,7 @@ fn generate_calendar(layout: &mut Layout_State) {
         ]);
 }
 
-fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
+fn show_focused_widget(app: &AppState, layout: &mut LayoutState) {
     // A list for the bottom row showing keyboard shortcuts
     let default_keybinds = vec![
         Cell::from("q|Quit"),
@@ -334,17 +334,13 @@ fn show_focused_widget(app: &App_State, layout: &mut Layout_State) {
 
 }
 
-fn render_layout<'a, B>(layout: Layout_State<'a>, f: tui::Frame<'a, B>) -> Layout_State<'a> where B: Backend {
-    layout
-}
+//fn render_layout<'a, B>(layout: LayoutState<'a>, f: tui::Frame<'a, B>) -> Layout_State<'a> where B: Backend {layout}
 
-fn handle_user_events(event: Event, app: App_State, todo_list: Todo_List, conn_pool: &MySqlPool) {
-}
+//fn handle_user_events(event: Event, app: AppState, todo_list: TodoList, conn_pool: &MySqlPool) {}
 
-fn handle_keyboard_events(key: KeyCode, app: App_State, todo_list: Todo_List, conn_pool: &MySqlPool) {
+//fn handle_keyboard_events(key: KeyCode, app: AppState, todo_list: TodoList, conn_pool: &MySqlPool) {}
 
-}
-async fn handle_search_events(key: KeyEvent, app: &mut App_State, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn handle_search_events(key: KeyEvent, app: &mut AppState, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Esc => {
             app.focused_widget = Widget::Main;
@@ -356,7 +352,7 @@ async fn handle_search_events(key: KeyEvent, app: &mut App_State, conn_pool: &My
             // SUBMIT SEARCH STRING...
             // TODO update to lazy loading
             app.search_results = db::search(&conn_pool, &app.search_string).await?;
-            app.main_content_shown = Content::Search_Results;
+            app.main_content_shown = Content::SearchResults;
         }
 
         KeyCode::Up => app.focused_widget = app.focused_widget.up(),
@@ -369,7 +365,7 @@ async fn handle_search_events(key: KeyEvent, app: &mut App_State, conn_pool: &My
 }
 
 
-fn handle_default_events(key: KeyEvent, app: &mut App_State) {
+fn handle_default_events(key: KeyEvent, app: &mut AppState) {
     match key.code {
         KeyCode::Char('q') => app.exit(), // Quit on 'q' press
         KeyCode::Char('Q') => app.exit(), // Quit on 'Q' press
@@ -387,7 +383,7 @@ fn handle_default_events(key: KeyEvent, app: &mut App_State) {
     }
 }
 
-async fn handle_list_events(key: KeyEvent, app: &mut App_State, todo_list: &mut Todo_List, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn handle_list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Char('q') => app.exit(), // Quit on 'q' press
         KeyCode::Char('Q') => app.exit(), // Quit on 'Q' press
@@ -396,8 +392,8 @@ async fn handle_list_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
         KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?),
 
         KeyCode::Char('n') => {
-            app.focused_widget = Widget::Edit_Todo; 
-            app.main_content_shown = Content::Edit_Todo;
+            app.focused_widget = Widget::EditTodo; 
+            app.main_content_shown = Content::EditTodo;
         }
 
         KeyCode::Tab => {
@@ -432,7 +428,7 @@ async fn handle_list_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
     Ok(())
 }
 
-async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut Todo_List, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn handle_edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Esc => {
             app.main_content_shown = Content::Daylist;
@@ -445,21 +441,21 @@ async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
         },
         KeyCode::Backspace => {
             match app.edit_selection {
-                Edit_Selection::Name => app.edit_name.pop(),
-                Edit_Selection::Description => app.edit_description.pop(),
-                Edit_Selection::DateDue => app.edit_date_due.pop(),
-                Edit_Selection::ReminderDate => app.edit_reminder_date.pop(),
+                EditSelection::Name => app.edit_name.pop(),
+                EditSelection::Description => app.edit_description.pop(),
+                EditSelection::DateDue => app.edit_date_due.pop(),
+                EditSelection::ReminderDate => app.edit_reminder_date.pop(),
                 // That none is there to satisfy the compiler
-                Edit_Selection::Priority => { app.edit_priority = 0; None}, 
+                EditSelection::Priority => { app.edit_priority = 0; None}, 
             };
         }, // remove last character
         KeyCode::Enter => {
             match app.edit_selection {
-                Edit_Selection::Name => app.edit_selection = Edit_Selection::Description,
-                Edit_Selection::Description => app.edit_selection = Edit_Selection::DateDue,
-                Edit_Selection::DateDue => app.edit_selection = Edit_Selection::ReminderDate,
-                Edit_Selection::ReminderDate => app.edit_selection = Edit_Selection::Priority,
-                Edit_Selection::Priority => {
+                EditSelection::Name => app.edit_selection = EditSelection::Description,
+                EditSelection::Description => app.edit_selection = EditSelection::DateDue,
+                EditSelection::DateDue => app.edit_selection = EditSelection::ReminderDate,
+                EditSelection::ReminderDate => app.edit_selection = EditSelection::Priority,
+                EditSelection::Priority => {
                     // Add todo 
                     db::create_todo(
                         &conn_pool, app.edit_name.clone(), Some(app.edit_description.clone()),
@@ -474,7 +470,7 @@ async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
                     app.edit_date_due.clear();
                     app.edit_reminder_date.clear();
                     app.edit_priority = 4; // Magic Number
-                    app.edit_selection = Edit_Selection::Name;
+                    app.edit_selection = EditSelection::Name;
                 }
             }
             // Reload todos
@@ -483,11 +479,11 @@ async fn handle_edit_events(key: KeyEvent, app: &mut App_State, todo_list: &mut 
         //  KeyCode::Tab // TODO add tab functionality
         KeyCode::Char(c) => {
             match app.edit_selection {
-                Edit_Selection::Name => app.edit_name.push(c),
-                Edit_Selection::Description => app.edit_description.push(c),
-                Edit_Selection::DateDue => app.edit_date_due.push(c),
-                Edit_Selection::ReminderDate => app.edit_reminder_date.push(c),
-                Edit_Selection::Priority => match c {
+                EditSelection::Name => app.edit_name.push(c),
+                EditSelection::Description => app.edit_description.push(c),
+                EditSelection::DateDue => app.edit_date_due.push(c),
+                EditSelection::ReminderDate => app.edit_reminder_date.push(c),
+                EditSelection::Priority => match c {
                     '1' => app.edit_priority = 1,
                     '2' => app.edit_priority = 2,
                     '3' => app.edit_priority = 3,

@@ -36,13 +36,13 @@ pub const LOGO4: &str = "
 pub mod nav {
     pub enum Content {
         Daylist,
-        Edit_Todo,
-        Search_Results,
+        EditTodo,
+        SearchResults,
     }
 
     pub enum Widget {
         Calendar,
-        Edit_Todo,
+        EditTodo,
         Main,
         Search,
         Upcoming,
@@ -105,16 +105,16 @@ pub mod state {
     use crate::{LOGO, LOGO2, LOGO3, LOGO4};
 
 
-    pub struct App_State {
+    pub struct AppState {
         running: bool,
-        pub todo_list: Todo_List,
+        pub todo_list: TodoList,
 
         pub search_string: String,
         pub main_context_string: String,
         pub search_results: Vec<Todo>,
 
         // Might need to extract to a new struct
-        pub edit_selection: Edit_Selection,
+        pub edit_selection: EditSelection,
         pub edit_name: String,
         pub edit_description: String,
         pub edit_date_due: String,
@@ -131,21 +131,21 @@ pub mod state {
         // ...
     }
 
-    impl App_State {
-        pub fn init() -> App_State {
+    impl AppState {
+        pub fn init() -> AppState {
             // TODO
             // do a bunch of calculations...
 
-            App_State {
+            AppState {
                 running: true,
-                todo_list: Todo_List::new(Vec::new()),
+                todo_list: TodoList::new(Vec::new()),
 
                 search_string: String::new(),
                 main_context_string: String::new(),
                 search_results: vec![],
 
                 // Might need to extract to a new struct
-                edit_selection: Edit_Selection::Name,
+                edit_selection: EditSelection::Name,
                 edit_name: String::new(),
                 edit_description: String::new(),
                 edit_date_due: String::new(),
@@ -177,7 +177,7 @@ pub mod state {
         }
     }
 
-    pub enum Edit_Selection {
+    pub enum EditSelection {
         Name,
         Description,
         DateDue,
@@ -185,7 +185,7 @@ pub mod state {
         Priority,
     }
 
-    pub struct Layout_State<'a> {
+    pub struct LayoutState<'a> {
         pub chunks: Vec<Rect>,
         pub columns: Vec<Rect>,
         pub left_column: Vec<Rect>,
@@ -207,9 +207,9 @@ pub mod state {
 
     }
 
-    impl Layout_State<'_> {
-        pub fn init() -> Layout_State<'static> {
-            Layout_State {
+    impl LayoutState<'_> {
+        pub fn init() -> LayoutState<'static> {
+            LayoutState {
                 chunks: vec![],
                 columns: vec![],
                 left_column: vec![],
@@ -336,14 +336,14 @@ pub mod state {
 
 use tui::widgets::ListState;
 use crate::schema::schema::Todo;
-pub struct Todo_List {
+pub struct TodoList {
     pub todos: Vec<Todo>,
     pub state: ListState,
 }
 
-impl Todo_List {
-    pub fn new(todos: Vec<Todo>) -> Todo_List {
-        Todo_List {
+impl TodoList {
+    pub fn new(todos: Vec<Todo>) -> TodoList {
+        TodoList {
             todos,
             state: ListState::default(),
         }

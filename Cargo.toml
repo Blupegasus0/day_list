@@ -1,9 +1,9 @@
 [package]
-name = "DayList"
+name = "day_list"
 description = "A TUI based todo list app built in rust"
 version = "0.1.0"
 edition = "2021"
-default-run = "DayList"
+default-run = "day_list"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
