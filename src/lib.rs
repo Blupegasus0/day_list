@@ -114,18 +114,18 @@ pub mod state {
         pub search_results: Vec<Todo>,
 
         // Might need to extract to a new struct
-        pub edit_selection: EditSelection,
-        pub edit_name: String,
-        pub edit_description: String,
-        pub edit_date_due: String,
-        pub edit_reminder_date: String,
-        pub edit_priority: i32,
+        pub edit_selection: EditSelection, // component state
+        pub edit_name: String, // component state
+        pub edit_description: String, // component state
+        pub edit_date_due: String, // component state
+        pub edit_reminder_date: String, // component state
+        pub edit_priority: i32, // component state
 
         pub focused_widget: Widget,
-        pub main_content_shown: Content,
+        pub main_content_shown: Content, // component state
 
-        pub todo_items_limit: u32,
-        pub todo_items_offset: u32,
+        pub todo_items_limit: u32, // component state
+        pub todo_items_offset: u32, // component state
 
         pub upcoming_list: Vec<Todo>,
         // ...

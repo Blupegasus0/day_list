@@ -22,11 +22,8 @@ use day_list::state::EditSelection;
 
 
 #[tokio::main]
-async fn main() {
-    run().await.expect("Daylist encountered an error...");
-}
-
-async fn run() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
+    // Init
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(stdout, EnableMouseCapture)?;
@@ -34,6 +31,21 @@ async fn run() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     terminal.clear()?;
+
+    // running loop
+    run(&mut terminal).await.expect("Daylist encountered an error...");
+
+    // Cleanup
+    disable_raw_mode()?;
+    crossterm::execute!(terminal.backend_mut(), DisableMouseCapture)?;
+    terminal.show_cursor()?;
+
+    Ok(())
+}
+
+async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>> 
+    where B: tui::backend::Backend
+{
 
     //let state = state::init(); // Implement when the state is finalized
 
@@ -201,11 +213,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
 
     } //running loop
 
-
-    // Cleanup
-    disable_raw_mode()?;
-    crossterm::execute!(terminal.backend_mut(), DisableMouseCapture)?;
-    terminal.show_cursor()?;
 
     Ok(())
 } //main
