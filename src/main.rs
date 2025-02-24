@@ -10,9 +10,8 @@ use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 use tui::Terminal;
-use sqlx::mysql::MySqlPool;
 
-use day_list::db::db;
+use day_list::db::Db;
 use day_list::nav::Widget;
 use day_list::nav::Content;
 use day_list::state::TodoList;
@@ -50,15 +49,15 @@ async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
     //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
-    let conn_pool = db::establish_connection().await.expect("Failed to connect to db. Try Again.");
+    let list_db = Db::new().await;
 
     // State
     let mut app = AppState::init();
     let mut layout = LayoutState::init();
 
-    app.upcoming_list = db::fetch_upcoming_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?;
-    app.todo_list = TodoList::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
-    let mut todo_list = TodoList::new(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?); // ERROR redundant
+    app.upcoming_list = list_db.fetch_upcoming_todos(app.todo_items_offset, app.todo_items_limit).await?;
+    app.todo_list = TodoList::new(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
+    let mut todo_list = TodoList::new(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?); // ERROR redundant
 
     loop {
         // my ghetto way to exit the program, forgot the right way
@@ -159,16 +158,16 @@ async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
 
         // Match on different types of events
         let user_event = event::read()?;
-        //handle_user_events(user_event, app, todo_list, &conn_pool);
+        //handle_user_events(user_event, app, todo_list, &list_db);
         match user_event {
             // Handle keyboard events
             Event::Key(key) => match app.focused_widget {
                 // Search box is focused
-                Widget::Search => handle_search_events(key, &mut app, &conn_pool).await?,
+                Widget::Search => handle_search_events(key, &mut app, &list_db).await?,
 
-                Widget::Main => handle_list_events(key, &mut app, &mut todo_list, &conn_pool).await?,
+                Widget::Main => handle_list_events(key, &mut app, &mut todo_list, &list_db).await?,
 
-                Widget::EditTodo => handle_edit_events(key, &mut app, &mut todo_list, &conn_pool).await?,
+                Widget::EditTodo => handle_edit_events(key, &mut app, &mut todo_list, &list_db).await?,
 
                 // Default Key handling
                 _ => handle_default_events(key, &mut app),
@@ -343,11 +342,11 @@ fn show_focused_widget(app: &AppState, layout: &mut LayoutState) {
 
 //fn render_layout<'a, B>(layout: LayoutState<'a>, f: tui::Frame<'a, B>) -> Layout_State<'a> where B: Backend {layout}
 
-//fn handle_user_events(event: Event, app: AppState, todo_list: TodoList, conn_pool: &MySqlPool) {}
+//fn handle_user_events(event: Event, app: AppState, todo_list: TodoList, list_db: &Db) {}
 
-//fn handle_keyboard_events(key: KeyCode, app: AppState, todo_list: TodoList, conn_pool: &MySqlPool) {}
+//fn handle_keyboard_events(key: KeyCode, app: AppState, todo_list: TodoList, list_db: &Db) {}
 
-async fn handle_search_events(key: KeyEvent, app: &mut AppState, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn handle_search_events(key: KeyEvent, app: &mut AppState, list_db: &Db) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Esc => {
             app.focused_widget = Widget::Main;
@@ -358,7 +357,7 @@ async fn handle_search_events(key: KeyEvent, app: &mut AppState, conn_pool: &MyS
         KeyCode::Enter => {
             // SUBMIT SEARCH STRING...
             // TODO update to lazy loading
-            app.search_results = db::search(&conn_pool, &app.search_string).await?;
+            app.search_results = list_db.search(&app.search_string).await?;
             app.main_content_shown = Content::SearchResults;
         }
 
@@ -390,13 +389,13 @@ fn handle_default_events(key: KeyEvent, app: &mut AppState) {
     }
 }
 
-async fn handle_list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn handle_list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, list_db: &Db) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Char('q') => app.exit(), // Quit on 'q' press
         KeyCode::Char('Q') => app.exit(), // Quit on 'Q' press
         KeyCode::Esc => app.main_content_shown = Content::Daylist,
 
-        KeyCode::Char('L') => todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?),
+        KeyCode::Char('L') => todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?),
 
         KeyCode::Char('n') => {
             app.focused_widget = Widget::EditTodo; 
@@ -413,13 +412,13 @@ async fn handle_list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut T
         }
 
         KeyCode::Char('d') => {
-            db::toggle_todo_status(&conn_pool, todo_list.get_selected_id()).await?;
-            todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
+            list_db.toggle_todo_status(todo_list.get_selected_id()).await?;
+            todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
         },
 
         KeyCode::Char('X') => {
-            db::delete_todo(&conn_pool, todo_list.get_selected_id()).await?;
-            todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
+            list_db.delete_todo(todo_list.get_selected_id()).await?;
+            todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
         },
 
         KeyCode::Char('k') => app.focused_widget = app.focused_widget.up(),
@@ -435,7 +434,7 @@ async fn handle_list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut T
     Ok(())
 }
 
-async fn handle_edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, conn_pool: &MySqlPool) -> Result<(), Box<dyn Error>> {
+async fn handle_edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, list_db: &Db) -> Result<(), Box<dyn Error>> {
     match key.code {
         KeyCode::Esc => {
             app.main_content_shown = Content::Daylist;
@@ -464,8 +463,8 @@ async fn handle_edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut T
                 EditSelection::ReminderDate => app.edit_selection = EditSelection::Priority,
                 EditSelection::Priority => {
                     // Add todo 
-                    db::create_todo(
-                        &conn_pool, app.edit_name.clone(), Some(app.edit_description.clone()),
+                    list_db.create_todo(
+                        app.edit_name.clone(), Some(app.edit_description.clone()),
                         app.parse_due(), app.parse_reminder(), None, app.edit_priority, None
                     ).await?;
 
@@ -481,7 +480,7 @@ async fn handle_edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut T
                 }
             }
             // Reload todos
-            todo_list.set_todos(db::fetch_todos(&conn_pool, app.todo_items_offset, app.todo_items_limit).await?);
+            todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
         },
         //  KeyCode::Tab // TODO add tab functionality
         KeyCode::Char(c) => {
