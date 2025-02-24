@@ -1,4 +1,4 @@
-use crate::schema::schema::Todo;
+use crate::schema::Todo;
 
 use sqlx::mysql::MySqlPool;
 use dotenv::dotenv;
