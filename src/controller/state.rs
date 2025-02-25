@@ -22,7 +22,7 @@ pub struct AppState {
     pub edit_description: String, // component state
     pub edit_date_due: String, // component state
     pub edit_reminder_date: String, // component state
-    pub edit_priority: i32, // component state
+    pub edit_priority: i64, // component state
 
     pub focused_widget: Widget,
     pub main_content_shown: Content, // component state
@@ -295,7 +295,7 @@ impl TodoList {
         self.state.select(None);
     }
 
-    pub fn get_selected_id(&self) -> Option<i32> {
+    pub fn get_selected_id(&self) -> Option<i64> {
         match self.state.selected() {
             Some(i) => {
                 Some(self.todos[i].todo_id)

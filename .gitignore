@@ -3,6 +3,8 @@ db*
 .env
 diesel.toml
 example.db
+daylist.db
+daylist.db*
 
 
 !db.rs
