@@ -2,11 +2,9 @@ use std::error::Error;
 use std::io;
 
 use tui::Terminal;
-use tui::backend::{Backend, CrosstermBackend};
+use tui::backend::CrosstermBackend;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent,
-    KeyModifiers
-};
+use crossterm::event::{DisableMouseCapture, EnableMouseCapture,};
 
 use day_list::view::render;
 

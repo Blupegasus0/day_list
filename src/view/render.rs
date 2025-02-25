@@ -1,9 +1,7 @@
 use std::error::Error;
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent,
-    KeyModifiers
-};
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use crossterm::event::{self, Event};
+use tui::layout::Constraint;
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 use tui::Terminal;
@@ -11,17 +9,14 @@ use tui::Terminal;
 use crate::model::db::Db;
 use crate::controller::nav::Widget;
 use crate::controller::nav::Content;
-use crate::model::schema::Todo;
 use crate::controller::state::TodoList;
 use crate::controller::state::AppState;
 use crate::controller::state::LayoutState;
-use crate::controller::state::EditSelection;
+use crate::controller::handle;
 
 pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>> 
     where B: tui::backend::Backend
 {
-
-    //let state = state::init(); // Implement when the state is finalized
 
     // database conncection
     let list_db = Db::new().await;
@@ -88,7 +83,7 @@ pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
             //let search_content = generate_search_results(&app, &mut layout); // ERROR
             layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
-            let mut search_results = app.search_results.iter()
+            let search_results = app.search_results.iter()
                 .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                 .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
             let search_content = List::new(search_results)
@@ -133,19 +128,19 @@ pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
 
         // Match on different types of events
         let user_event = event::read()?;
-        //handle_user_events(user_event, app, todo_list, &list_db);
+        //handle::user_events(user_event, app, todo_list, &list_db);
         match user_event {
             // Handle keyboard events
             Event::Key(key) => match app.focused_widget {
                 // Search box is focused
-                Widget::Search => handle_search_events(key, &mut app, &list_db).await?,
+                Widget::Search => handle::search_events(key, &mut app, &list_db).await?,
 
-                Widget::Main => handle_list_events(key, &mut app, &mut todo_list, &list_db).await?,
+                Widget::Main => handle::list_events(key, &mut app, &mut todo_list, &list_db).await?,
 
-                Widget::EditTodo => handle_edit_events(key, &mut app, &mut todo_list, &list_db).await?,
+                Widget::EditTodo => handle::edit_events(key, &mut app, &mut todo_list, &list_db).await?,
 
                 // Default Key handling
-                _ => handle_default_events(key, &mut app),
+                _ => handle::default_events(key, &mut app),
             },
 
 
@@ -189,12 +184,12 @@ pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
 
 
     Ok(())
-} //main
+} //run
 
 fn generate_search_results<'a>(app: &'a AppState, layout: &'a mut LayoutState<'a>) -> List<'a> {
             layout.search_box = Paragraph::new(app.search_string.clone()).block(Block::default().title("Search")
                 .borders(Borders::ALL));
-            let mut search_results = app.search_results.iter()
+            let search_results = app.search_results.iter()
                 .map(|todo| ListItem::new(todo.format()).style(Style::default().fg(Color::White)))
                 .collect::<Vec<ListItem<'_>>>(); // probably suboptimal
             let search_content = List::new(search_results)
@@ -317,182 +312,3 @@ fn show_focused_widget(app: &AppState, layout: &mut LayoutState) {
 
 //fn render_layout<'a, B>(layout: LayoutState<'a>, f: tui::Frame<'a, B>) -> Layout_State<'a> where B: Backend {layout}
 
-//fn handle_user_events(event: Event, app: AppState, todo_list: TodoList, list_db: &Db) {}
-
-//fn handle_keyboard_events(key: KeyCode, app: AppState, todo_list: TodoList, list_db: &Db) {}
-
-async fn handle_search_events(key: KeyEvent, app: &mut AppState, list_db: &Db) -> Result<(), Box<dyn Error>> {
-    match key.code {
-        KeyCode::Esc => {
-            app.focused_widget = Widget::Main;
-            app.main_content_shown = Content::Daylist;
-        }, 
-        KeyCode::Char(c) => app.search_string.push(c), // append character to search string
-        KeyCode::Backspace => {app.search_string.pop();}, // remove last character
-        KeyCode::Enter => {
-            // SUBMIT SEARCH STRING...
-            // TODO update to lazy loading
-            app.search_results = list_db.search(&app.search_string).await?;
-            app.main_content_shown = Content::SearchResults;
-        }
-
-        KeyCode::Up => app.focused_widget = app.focused_widget.up(),
-        KeyCode::Down => app.focused_widget = app.focused_widget.down(),
-        KeyCode::Left => app.focused_widget = app.focused_widget.left(),
-        KeyCode::Right => app.focused_widget = app.focused_widget.right(),
-        _ => {} // Handle other keys as needed
-    };
-    Ok(())
-}
-
-
-fn handle_default_events(key: KeyEvent, app: &mut AppState) {
-    match key.code {
-        KeyCode::Char('q') => app.exit(), // Quit on 'q' press
-        KeyCode::Char('Q') => app.exit(), // Quit on 'Q' press
-        KeyCode::Esc => app.exit(), // Exit on Escape key - We'll see if this is kept
-
-        KeyCode::Char('k') => app.focused_widget = app.focused_widget.up(),
-        KeyCode::Char('j') => app.focused_widget = app.focused_widget.down(),
-        KeyCode::Char('h') => app.focused_widget = app.focused_widget.left(),
-        KeyCode::Char('l') => app.focused_widget = app.focused_widget.right(),
-        KeyCode::Up => app.focused_widget = app.focused_widget.up(),
-        KeyCode::Down => app.focused_widget = app.focused_widget.down(),
-        KeyCode::Left => app.focused_widget = app.focused_widget.left(),
-        KeyCode::Right => app.focused_widget = app.focused_widget.right(),
-        _ => {}, // Handle other keys as needed
-    }
-}
-
-async fn handle_list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, list_db: &Db) -> Result<(), Box<dyn Error>> {
-    match key.code {
-        KeyCode::Char('q') => app.exit(), // Quit on 'q' press
-        KeyCode::Char('Q') => app.exit(), // Quit on 'Q' press
-        KeyCode::Esc => app.main_content_shown = Content::Daylist,
-
-        KeyCode::Char('L') => todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?),
-
-        KeyCode::Char('n') => {
-            app.focused_widget = Widget::EditTodo; 
-            app.main_content_shown = Content::EditTodo;
-        }
-
-        KeyCode::Tab => {
-            if key.modifiers.contains(KeyModifiers::SHIFT) {
-                print!("Going up captain!");
-                todo_list.previous();
-            } else {
-                todo_list.next();
-            }
-        }
-
-        KeyCode::Char('d') => {
-            list_db.toggle_todo_status(todo_list.get_selected_id()).await?;
-            todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
-        },
-
-        KeyCode::Char('X') => {
-            list_db.delete_todo(todo_list.get_selected_id()).await?;
-            todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
-        },
-
-        KeyCode::Char('k') => app.focused_widget = app.focused_widget.up(),
-        KeyCode::Char('j') => app.focused_widget = app.focused_widget.down(),
-        KeyCode::Char('h') => app.focused_widget = app.focused_widget.left(),
-        KeyCode::Char('l') => app.focused_widget = app.focused_widget.right(),
-        KeyCode::Up => app.focused_widget = app.focused_widget.up(),
-        KeyCode::Down => app.focused_widget = app.focused_widget.down(),
-        KeyCode::Left => app.focused_widget = app.focused_widget.left(),
-        KeyCode::Right => app.focused_widget = app.focused_widget.right(),
-        _ => {}, // Handle other keys as needed
-    };
-    Ok(())
-}
-
-async fn handle_edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut TodoList, list_db: &Db) -> Result<(), Box<dyn Error>> {
-    match key.code {
-        KeyCode::Esc => {
-            app.main_content_shown = Content::Daylist;
-            app.focused_widget = Widget::Main;
-            app.edit_name.clear();
-            app.edit_description.clear();
-            app.edit_date_due.clear();
-            app.edit_reminder_date.clear();
-            app.edit_priority = 4; // Magic Number
-        },
-        KeyCode::Backspace => {
-            match app.edit_selection {
-                EditSelection::Name => app.edit_name.pop(),
-                EditSelection::Description => app.edit_description.pop(),
-                EditSelection::DateDue => app.edit_date_due.pop(),
-                EditSelection::ReminderDate => app.edit_reminder_date.pop(),
-                // That none is there to satisfy the compiler
-                EditSelection::Priority => { app.edit_priority = 0; None}, 
-            };
-        }, // remove last character
-        KeyCode::Enter => {
-            match app.edit_selection {
-                EditSelection::Name => app.edit_selection = EditSelection::Description,
-                EditSelection::Description => app.edit_selection = EditSelection::DateDue,
-                EditSelection::DateDue => app.edit_selection = EditSelection::ReminderDate,
-                EditSelection::ReminderDate => app.edit_selection = EditSelection::Priority,
-                EditSelection::Priority => {
-                    // Add todo 
-                    let new_todo = Todo{
-                        todo_id: 0,
-                        title: app.edit_name.clone(), 
-                        description: Some(app.edit_description.clone()),
-                        date_created: None,
-                        status: 0,
-                        date_due: app.parse_due(), 
-                        reminder_date: app.parse_reminder(), 
-                        parent_todo: None, 
-                        priority: app.edit_priority, 
-                        project_id: None,
-                    };
-                    list_db.create_todo(&new_todo).await?;
-
-                    app.main_content_shown = Content::Daylist;
-                    app.focused_widget = Widget::Main;
-
-                    app.edit_name.clear();
-                    app.edit_description.clear();
-                    app.edit_date_due.clear();
-                    app.edit_reminder_date.clear();
-                    app.edit_priority = 4; // Magic Number
-                    app.edit_selection = EditSelection::Name;
-                }
-            }
-            // Reload todos
-            todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?);
-        },
-        //  KeyCode::Tab // TODO add tab functionality
-        KeyCode::Char(c) => {
-            match app.edit_selection {
-                EditSelection::Name => app.edit_name.push(c),
-                EditSelection::Description => app.edit_description.push(c),
-                EditSelection::DateDue => app.edit_date_due.push(c),
-                EditSelection::ReminderDate => app.edit_reminder_date.push(c),
-                EditSelection::Priority => match c {
-                    '1' => app.edit_priority = 1,
-                    '2' => app.edit_priority = 2,
-                    '3' => app.edit_priority = 3,
-                    '4' => app.edit_priority = 4,
-                    '5' => app.edit_priority = 5,
-                    '6' => app.edit_priority = 6,
-                    '7' => app.edit_priority = 7,
-                    '8' => app.edit_priority = 8,
-                    '9' => app.edit_priority = 9,
-                    _ => app.edit_priority = 4,
-                }
-            }
-        }, 
-
-        KeyCode::Up => app.focused_widget = app.focused_widget.up(),
-        KeyCode::Down => app.focused_widget = app.focused_widget.down(),
-        KeyCode::Left => app.focused_widget = app.focused_widget.left(),
-        KeyCode::Right => app.focused_widget = app.focused_widget.right(),
-        _ => {},
-    }
-    Ok(())
-}
