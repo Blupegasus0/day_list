@@ -1,7 +1,7 @@
-pub mod schema;
-pub mod db;
-pub mod nav;
-pub mod state;
+pub mod model;
+pub mod view;
+pub mod controller;
+
 
 //https://patorjk.com/software/taag/#p=display&f=Tmplr&t=Daylist
 pub const LOGO: &str = "
@@ -34,6 +34,34 @@ pub const LOGO4: &str = "
             |__/            
 ";
 
+
+impl crate::model::schema::Todo {
+    pub fn format(&self, /* options */) -> String {
+        let mut todo_status = "[ ]";
+        let description = match self.description.clone() {
+            Some(s) => s,
+            None => "--".to_string(),
+        }; 
+        let date_due = match self.date_due {
+            Some(d) => d.format("%d/%m/%Y %H:%M:%S").to_string(),
+            _ => String::from("invalid date")
+        };
+        let reminder_date = match self.reminder_date {
+            Some(d) => d.format("%d/%m/%Y %H:%M:%S").to_string(),
+            _ => String::from("invalid date")
+        };
+
+
+        if self.status == 1 {
+            todo_status = "[]";
+        }
+
+        format!("\n   {} {}\n       {}\n    {}\n    {}\n    {}\n",
+            todo_status, self.title, description,
+            reminder_date, date_due, self.priority
+        )
+    }
+}
 
 pub mod utils {
     // TODO display popup message for user

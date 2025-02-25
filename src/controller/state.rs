@@ -3,8 +3,8 @@ use tui::style::{Color, Style};
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use chrono::{NaiveDateTime, Local};
 
-use crate::nav::Widget;
-use crate::nav::Content;
+use crate::controller::nav::Widget;
+use crate::controller::nav::Content;
 use crate::{LOGO, LOGO2, LOGO3, LOGO4};
 
 
@@ -238,7 +238,7 @@ impl LayoutState<'_> {
 }
 
 use tui::widgets::ListState;
-use crate::schema::Todo;
+use crate::model::schema::Todo;
 pub struct TodoList {
     pub todos: Vec<Todo>,
     pub state: ListState,

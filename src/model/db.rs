@@ -1,11 +1,10 @@
-use crate::schema::Todo;
-
 use sqlx::mysql::MySqlPool;
 use dotenv::dotenv;
 use std::env;
 use chrono::{NaiveDateTime, Local};
 
 use crate::utils;
+use crate::model::schema::Todo;
 
 pub struct Db {
     pub conn_pool: MySqlPool,
@@ -54,20 +53,14 @@ WHERE todo.title LIKE ? OR todo.description LIKE ?;", search_string1, search_str
         Ok(todos)
     }
 
-    // TODO Should be monadic
-    pub async fn create_todo(&self, title: String, 
-        description: Option<String>, date_due: Option<NaiveDateTime>, 
-        reminder_date: Option<NaiveDateTime>, parent_todo: Option<i32>, 
-        priority: i32, project_id: Option<i32>
-    ) -> Result<(), sqlx::Error> {
+    pub async fn create_todo(&self, todo: &Todo) -> Result<(), sqlx::Error> {
         let current_date = Some(Local::now().naive_local());
-        let status = false;
 
         sqlx::query!("INSERT INTO todo (title, description, date_created, status, date_due, reminder_date, parent_todo, priority, project_id) 
 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
-            title, description, current_date, status, date_due, 
-            reminder_date, parent_todo, 
-            priority, project_id
+            todo.title, todo.description, current_date, todo.status, todo.date_due, 
+            todo.reminder_date, todo.parent_todo, 
+            todo.priority, todo.project_id
         )
             .execute(&self.conn_pool)
         .await?;
@@ -83,16 +76,12 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
                     .fetch_optional(&self.conn_pool)
                 .await?;
 
-                match record {
-                    Some(value) => {
-                        let mut status = value.status;
-                        if status == 0 {status = 1} else {status = 0;}
-                        sqlx::query!("UPDATE todo SET status = ? WHERE todo_id = ?", status, id)
-                            .execute(&self.conn_pool)
-                        .await?;
-
-                    }
-                    None => {},
+                if let Some(value) = record {
+                    let mut status = value.status;
+                    if status == 0 {status = 1} else {status = 0;}
+                    sqlx::query!("UPDATE todo SET status = ? WHERE todo_id = ?", status, id)
+                        .execute(&self.conn_pool)
+                    .await?;
                 }
             }
             None =>  utils::alert("No valid todo item selected."),// TODO error popup "no"
@@ -112,16 +101,10 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);",
         Ok(())
     }
 
-    // TODO Should be monadic
-    pub async fn update_todo(&self, id: Option<i32>, title: String, description: String) -> Result<(), sqlx::Error>{
-        match id {
-            Some(id) => {
-                sqlx::query!("UPDATE todo SET title = ?, description = ? WHERE todo_id = ?", title, description, id)
-                    .execute(&self.conn_pool)
-                .await?;
-            }
-            None =>  utils::alert("No valid todo item selected."),// TODO error popup "no"
-        };
+    pub async fn update_todo(&self, todo: &Todo) -> Result<(), sqlx::Error>{
+        sqlx::query!("UPDATE todo SET title = ?, description = ? WHERE todo_id = ?", todo.title, todo.description, todo.todo_id)
+            .execute(&self.conn_pool)
+        .await?;
         Ok(())
     }
 
