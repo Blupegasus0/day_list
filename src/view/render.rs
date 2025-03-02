@@ -128,18 +128,12 @@ pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
 
         // Match on different types of events
         let user_event = event::read()?;
-        //handle::user_events(user_event, app, todo_list, &list_db);
         match user_event {
             // Handle keyboard events
             Event::Key(key) => match app.focused_widget {
-                // Search box is focused
                 Widget::Search => handle::search_events(key, &mut app, &list_db).await?,
-
                 Widget::Main => handle::list_events(key, &mut app, &mut todo_list, &list_db).await?,
-
                 Widget::EditTodo => handle::edit_events(key, &mut app, &mut todo_list, &list_db).await?,
-
-                // Default Key handling
                 _ => handle::default_events(key, &mut app),
             },
 
