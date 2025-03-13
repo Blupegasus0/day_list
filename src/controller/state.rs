@@ -1,11 +1,12 @@
 use tui::widgets::{Block, Borders, Paragraph, List, ListItem, Table, Row, Cell};
 use tui::style::{Color, Style};
 use tui::layout::{Constraint, Direction, Layout, Rect};
-use chrono::{NaiveDateTime, Local};
 
 use crate::controller::nav::Widget;
 use crate::controller::nav::Content;
-use crate::{LOGO, LOGO2, LOGO3, LOGO4};
+use crate::LOGO4;
+use crate::controller::edit_todo::EditTodo;
+use crate::controller::edit_todo::EditAction;
 
 
 pub struct AppState {
@@ -16,13 +17,8 @@ pub struct AppState {
     pub main_context_string: String,
     pub search_results: Vec<Todo>,
 
-    // Might need to extract to a new struct
-    pub edit_selection: EditSelection, // component state
-    pub edit_name: String, // component state
-    pub edit_description: String, // component state
-    pub edit_date_due: String, // component state
-    pub edit_reminder_date: String, // component state
-    pub edit_priority: i64, // component state
+    pub edit: EditTodo,
+    pub edit_action: EditAction,
 
     pub focused_widget: Widget,
     pub main_content_shown: Content, // component state
@@ -47,13 +43,8 @@ impl AppState {
             main_context_string: String::new(),
             search_results: vec![],
 
-            // Might need to extract to a new struct
-            edit_selection: EditSelection::Name,
-            edit_name: String::new(),
-            edit_description: String::new(),
-            edit_date_due: String::new(),
-            edit_reminder_date: String::new(),
-            edit_priority: 4,
+            edit: EditTodo::new(),
+            edit_action: EditAction::Create,
 
             focused_widget: Widget::Main,
             main_content_shown: Content::Daylist,
@@ -65,27 +56,12 @@ impl AppState {
         }
     }
 
-    pub fn parse_due(&self) -> Option<NaiveDateTime> {
-        NaiveDateTime::parse_from_str(self.edit_date_due.as_str(), "%d/%m/%y %H:%M").ok()
-    }
-    pub fn parse_reminder(&self) -> Option<NaiveDateTime> {
-        NaiveDateTime::parse_from_str(self.edit_reminder_date.as_str(), "%d/%m/%y %H:%M").ok()
-    }
-
     pub fn is_running(&self) -> bool {
         self.running
     } 
     pub fn exit(&mut self) {
         self.running = false;
     }
-}
-
-pub enum EditSelection {
-    Name,
-    Description,
-    DateDue,
-    ReminderDate,
-    Priority,
 }
 
 pub struct LayoutState<'a> {

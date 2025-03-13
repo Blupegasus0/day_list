@@ -37,6 +37,7 @@ pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
             layout.structure(frame.size());
             layout.update_bounds();
 
+            // TODO move to edit_todo
             // Edit todo... {
             let edit_string = format!("
                 Title: {}
@@ -52,9 +53,9 @@ pub async fn run<B>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
             
                 Priority 1-9:  {}
                 ",
-                app.edit_name, app.edit_description,
-                app.edit_date_due, app.edit_reminder_date,
-                app.edit_priority
+                app.edit.name, app.edit.description,
+                app.edit.date_due, app.edit.reminder_date,
+                app.edit.priority
             );
             let edit_item = vec![ListItem::new(edit_string)];
 
@@ -218,6 +219,7 @@ fn show_focused_widget(app: &AppState, layout: &mut LayoutState) {
         Cell::from("q|Quit"),
         Cell::from("Esc|Home"),
         Cell::from("n|New"),
+        Cell::from("e|Edit"),
         Cell::from("d|Complete todo"),
         Cell::from("X|Delete todo"),
         Cell::from("L|List todos"),
@@ -227,6 +229,7 @@ fn show_focused_widget(app: &AppState, layout: &mut LayoutState) {
     let search_keybinds = vec![
         Cell::from("Esc|Home"),
         Cell::from("d|Complete todo"),
+        Cell::from("e|Edit"),
         Cell::from("X|Delete todo"),
         Cell::from("Tab|Navigate Todos"),
         Cell::from("Enter|Search!"),
@@ -244,6 +247,7 @@ fn show_focused_widget(app: &AppState, layout: &mut LayoutState) {
         Cell::from("q|Quit"),
         Cell::from("Esc|Home"),
         Cell::from("n|New"),
+        Cell::from("e|Edit"),
         Cell::from("d|Complete todo"),
         Cell::from("X|Delete todo"),
         Cell::from("L|List todos"),

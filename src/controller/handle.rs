@@ -7,7 +7,8 @@ use crate::model::schema::Todo;
 use crate::controller::nav::Content;
 use crate::controller::nav::Widget;
 use crate::controller::state::AppState;
-use crate::controller::state::EditSelection;
+use crate::controller::edit_todo::EditSelection;
+use crate::controller::edit_todo::EditAction;
 use crate::controller::state::TodoList;
 
 //fn user_events(event: Event, app: AppState, todo_list: TodoList, list_db: &Db) {}
@@ -68,6 +69,13 @@ pub async fn list_events(key: KeyEvent, app: &mut AppState, todo_list: &mut Todo
         KeyCode::Char('L') => todo_list.set_todos(list_db.fetch_todos(app.todo_items_offset, app.todo_items_limit).await?),
 
         KeyCode::Char('n') => {
+            app.edit_action = EditAction::Create;
+            app.focused_widget = Widget::EditTodo; 
+            app.main_content_shown = Content::EditTodo;
+        }
+
+        KeyCode::Char('e') => {
+            app.edit_action = EditAction::Update;
             app.focused_widget = Widget::EditTodo; 
             app.main_content_shown = Content::EditTodo;
         }
@@ -109,53 +117,36 @@ pub async fn edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut Todo
         KeyCode::Esc => {
             app.main_content_shown = Content::Daylist;
             app.focused_widget = Widget::Main;
-            app.edit_name.clear();
-            app.edit_description.clear();
-            app.edit_date_due.clear();
-            app.edit_reminder_date.clear();
-            app.edit_priority = 4; // Magic Number
+            app.edit.name.clear();
+            app.edit.description.clear();
+            app.edit.date_due.clear();
+            app.edit.reminder_date.clear();
+            app.edit.priority = 4; // Magic Number
         },
         KeyCode::Backspace => {
-            match app.edit_selection {
-                EditSelection::Name => app.edit_name.pop(),
-                EditSelection::Description => app.edit_description.pop(),
-                EditSelection::DateDue => app.edit_date_due.pop(),
-                EditSelection::ReminderDate => app.edit_reminder_date.pop(),
+            match app.edit.selection {
+                EditSelection::Name => app.edit.name.pop(),
+                EditSelection::Description => app.edit.description.pop(),
+                EditSelection::DateDue => app.edit.date_due.pop(),
+                EditSelection::ReminderDate => app.edit.reminder_date.pop(),
                 // That none is there to satisfy the compiler
-                EditSelection::Priority => { app.edit_priority = 0; None}, 
+                EditSelection::Priority => { app.edit.priority = 0; None}, 
             };
         }, // remove last character
         KeyCode::Enter => {
-            match app.edit_selection {
-                EditSelection::Name => app.edit_selection = EditSelection::Description,
-                EditSelection::Description => app.edit_selection = EditSelection::DateDue,
-                EditSelection::DateDue => app.edit_selection = EditSelection::ReminderDate,
-                EditSelection::ReminderDate => app.edit_selection = EditSelection::Priority,
+            match app.edit.selection {
+                EditSelection::Name => app.edit.selection = EditSelection::Description,
+                EditSelection::Description => app.edit.selection = EditSelection::DateDue,
+                EditSelection::DateDue => app.edit.selection = EditSelection::ReminderDate,
+                EditSelection::ReminderDate => app.edit.selection = EditSelection::Priority,
                 EditSelection::Priority => {
-                    // Add todo 
-                    let new_todo = Todo{
-                        todo_id: 0,
-                        title: app.edit_name.clone(), 
-                        description: Some(app.edit_description.clone()),
-                        date_created: None,
-                        status: 0,
-                        date_due: app.parse_due(), 
-                        reminder_date: app.parse_reminder(), 
-                        parent_todo: None, 
-                        priority: app.edit_priority, 
-                        project_id: None,
-                    };
-                    list_db.create_todo(&new_todo).await?;
+                    match app.edit_action {
+                        EditAction::Create => list_db.create_todo(&app.edit.new_todo()).await?,
+                        EditAction::Update => list_db.create_todo(&app.edit.update_todo()).await?,
+                    }
 
                     app.main_content_shown = Content::Daylist;
                     app.focused_widget = Widget::Main;
-
-                    app.edit_name.clear();
-                    app.edit_description.clear();
-                    app.edit_date_due.clear();
-                    app.edit_reminder_date.clear();
-                    app.edit_priority = 4; // Magic Number
-                    app.edit_selection = EditSelection::Name;
                 }
             }
             // Reload todos
@@ -163,22 +154,22 @@ pub async fn edit_events(key: KeyEvent, app: &mut AppState, todo_list: &mut Todo
         },
         //  KeyCode::Tab // TODO add tab functionality
         KeyCode::Char(c) => {
-            match app.edit_selection {
-                EditSelection::Name => app.edit_name.push(c),
-                EditSelection::Description => app.edit_description.push(c),
-                EditSelection::DateDue => app.edit_date_due.push(c),
-                EditSelection::ReminderDate => app.edit_reminder_date.push(c),
+            match app.edit.selection {
+                EditSelection::Name => app.edit.name.push(c),
+                EditSelection::Description => app.edit.description.push(c),
+                EditSelection::DateDue => app.edit.date_due.push(c),
+                EditSelection::ReminderDate => app.edit.reminder_date.push(c),
                 EditSelection::Priority => match c {
-                    '1' => app.edit_priority = 1,
-                    '2' => app.edit_priority = 2,
-                    '3' => app.edit_priority = 3,
-                    '4' => app.edit_priority = 4,
-                    '5' => app.edit_priority = 5,
-                    '6' => app.edit_priority = 6,
-                    '7' => app.edit_priority = 7,
-                    '8' => app.edit_priority = 8,
-                    '9' => app.edit_priority = 9,
-                    _ => app.edit_priority = 4,
+                    '1' => app.edit.priority = 1,
+                    '2' => app.edit.priority = 2,
+                    '3' => app.edit.priority = 3,
+                    '4' => app.edit.priority = 4,
+                    '5' => app.edit.priority = 5,
+                    '6' => app.edit.priority = 6,
+                    '7' => app.edit.priority = 7,
+                    '8' => app.edit.priority = 8,
+                    '9' => app.edit.priority = 9,
+                    _ => app.edit.priority = 4,
                 }
             }
         }, 
