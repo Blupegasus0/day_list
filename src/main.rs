@@ -10,7 +10,7 @@ use day_list::view::render;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // Init
+    // Setup Terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     crossterm::execute!(stdout, EnableMouseCapture)?;
